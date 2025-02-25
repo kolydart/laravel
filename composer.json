@@ -5,7 +5,12 @@
     "license": "GPL-3.0-or-later",
     "autoload": {
         "psr-4": {
-            "kolydart\\laravel\\": "src/"
+            "Kolydart\\Laravel\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Kolydart\\Laravel\\Tests\\": "tests/"
         }
     },
     "authors": [
@@ -14,6 +19,16 @@
         }
     ],
     "require": {
-
+        "php": "^7.4|^8.1",
+        "illuminate/support": "^8.0|^9.0|^10.0",
+        "illuminate/database": "^8.0|^9.0|^10.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0"
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true,
+    "scripts": {
+        "test": "vendor/bin/phpunit"
     }
 }
