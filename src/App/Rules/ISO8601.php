@@ -54,6 +54,10 @@ class ISO8601 implements Rule
      */
     public function message()
     {
-        return trans('gw.iso8601');
+        if (function_exists('trans')) {
+            return trans('gw.iso8601');
+        }
+        
+        return 'The :attribute must be a valid ISO8601 date format.';
     }
 } 
