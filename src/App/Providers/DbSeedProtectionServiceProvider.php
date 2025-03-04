@@ -16,15 +16,9 @@ use Illuminate\Console\Command;
  * the `db:seed` command IF RUN IN PRODUCTION.
  * 
  * Usage:
- * 1. Register in config/app.php providers array:
- *    Kolydart\Laravel\App\Providers\DbSeedProtectionServiceProvider::class
- * 
- * @example
- *     // In config/app.php
- *     'providers' => [
- *         // ...
- *         Kolydart\Laravel\App\Providers\DbSeedProtectionServiceProvider::class,
- *     ]
+ * The provider is automatically registered through Laravel's package discovery.
+ * Simply install the package:
+ *     composer require kolydart/laravel
  */
 class DbSeedProtectionServiceProvider extends ServiceProvider
 {
