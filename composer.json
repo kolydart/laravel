@@ -31,5 +31,12 @@
     "prefer-stable": true,
     "scripts": {
         "test": "vendor/bin/phpunit"
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Kolydart\\Laravel\\App\\Providers\\DbSeedProtectionServiceProvider"
+            ]
+        }
     }
 }
