@@ -38,7 +38,8 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Kolydart\\Laravel\\App\\Providers\\DbSeedProtectionServiceProvider"
+                "Kolydart\\Laravel\\App\\Providers\\DbSeedProtectionServiceProvider",
+                "Kolydart\\Laravel\\Providers\\ComponentsServiceProvider"
             ]
         }
     }
