@@ -17,17 +17,11 @@ class FormFieldsSize extends Component
      * <x-kolydart::form-fields-size />
      * 
      * @example usage in blade views:
-     * ```blade
-     * <form>
-     *     <x-kolydart::form-fields-size class="col-md-6" />
-     *     <div class="form-group">
-     *         <input type="text" name="name">
-     *     </div>
-     *     <div class="form-group">
-     *         <input type="email" name="email">
-     *     </div>
-     * </form>
-     * ```
+     * @section('scripts')
+     *
+     *   <x-kolydart::form-fields-size />
+     *
+     * @endsection
      * 
      * This will render as:
      * ```html
