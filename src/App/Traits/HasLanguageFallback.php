@@ -61,7 +61,7 @@ trait HasLanguageFallback
      * @param string $field Base field name
      * @return mixed
      */
-    public function getFieldWithFallback($field)
+    public function getFallback($field)
     {
         $locale = $this->getCurrentLocale();
         
@@ -104,7 +104,7 @@ trait HasLanguageFallback
      */
     public function getTitleFallbackAttribute()
     {
-        return $this->getFieldWithFallback('title');
+        return $this->getFallback('title');
     }
     
     /**
@@ -114,7 +114,7 @@ trait HasLanguageFallback
      */
     public function getDescriptionFallbackAttribute()
     {
-        return $this->getFieldWithFallback('description');
+        return $this->getFallback('description');
     }
     
     /**
@@ -124,6 +124,6 @@ trait HasLanguageFallback
      */
     public function getNameFallbackAttribute()
     {
-        return $this->getFieldWithFallback('name');
+        return $this->getFallback('name');
     }
 }

@@ -246,4 +246,66 @@ class HasLanguageFallbackTest extends TestCase
         $model->title_en = null; 
         $this->assertEquals('Alternative Title', $model->title_fallback);
     }
+
+    /** @test */
+    public function it_provides_direct_fallback_for_any_field()
+    {
+        // Create test model with Greek locale
+        $model = new class extends Model {
+            use HasLanguageFallback;
+            
+            // Override the protected getCurrentLocale method to always return 'el'
+            protected function getCurrentLocale()
+            {
+                return 'el';
+            }
+        };
+
+        // Setup custom fields
+        $model->custom = 'Greek Custom';
+        $model->custom_en = 'English Custom';
+        $model->custom_alt = 'Alt Custom';
+        
+        // Test Greek locale field order (custom → custom_en → custom_alt)
+        $this->assertEquals('Greek Custom', $model->getFallback('custom'));
+
+        // Test Greek locale fallbacks
+        $model->custom = null;
+        $this->assertEquals('English Custom', $model->getFallback('custom'));
+
+        $model->custom_en = null;
+        $this->assertEquals('Alt Custom', $model->getFallback('custom'));
+
+        $model->custom_alt = null;
+        $this->assertNull($model->getFallback('custom'));
+
+        // Create a new test model for English locale test
+        $model = new class extends Model {
+            use HasLanguageFallback;
+            
+            // Override the protected getCurrentLocale method to always return 'en'
+            protected function getCurrentLocale()
+            {
+                return 'en';
+            }
+        };
+
+        // Setup custom fields again
+        $model->custom = 'Greek Custom';
+        $model->custom_en = 'English Custom';
+        $model->custom_alt = 'Alt Custom';
+        
+        // Test English locale field order (custom_en → custom_alt → custom)
+        $this->assertEquals('English Custom', $model->getFallback('custom'));
+
+        // Test English locale fallbacks
+        $model->custom_en = null;
+        $this->assertEquals('Alt Custom', $model->getFallback('custom'));
+
+        $model->custom_alt = null;
+        $this->assertEquals('Greek Custom', $model->getFallback('custom'));
+
+        // Test with non-existent field
+        $this->assertNull($model->getFallback('nonexistent'));
+    }
 } 
