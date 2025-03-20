@@ -1,31 +1,25 @@
 <?php
 namespace Kolydart\Laravel\App\Traits;
 
-use Illuminate\Database\Eloquent\Casts\Attribute;
-
 trait HasLanguageFallback
 {
     /**
      * Get title with English fallback.
      *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     * @return string|null
      */
-    protected function titleFallback(): Attribute
+    public function getTitleFallbackAttribute()
     {
-        return Attribute::make(
-            get: fn () => $this->attributes['title'] ?? $this->attributes['title_en'] ?? null
-        );
+        return $this->title ?? $this->title_en ?? null;
     }
 
     /**
      * Get description with English fallback.
      *
-     * @return \Illuminate\Database\Eloquent\Casts\Attribute
+     * @return string|null
      */
-    protected function descriptionFallback(): Attribute
+    public function getDescriptionFallbackAttribute()
     {
-        return Attribute::make(
-            get: fn () => $this->attributes['description'] ?? $this->attributes['description_en'] ?? null
-        );
+        return $this->description ?? $this->description_en ?? null;
     }
 }
