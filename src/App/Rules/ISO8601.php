@@ -4,6 +4,7 @@ namespace Kolydart\Laravel\App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
 use DateTime;
+use Kolydart\Laravel\Resources\Lang\En\Gw;
 
 /**
  * Validate that a date string is in ISO8601 format
@@ -54,8 +55,12 @@ class ISO8601 implements Rule
      */
     public function message()
     {
-        if (function_exists('trans')) {
-            return trans('gw.iso8601');
+        if (class_exists(Gw::class) && isset(Gw::$translation['iso8601'])) {
+            return Gw::$translation['iso8601'];
+        }
+        
+        if (function_exists('trans') && ($translation = trans('gw.iso8601')) !== 'gw.iso8601') {
+            return $translation;
         }
         
         return 'The :attribute must be a valid ISO8601 date format.';
