@@ -42,13 +42,13 @@ class FormFieldsSize extends Component
 
     public function render()
     {
-        return <<<'blade'
+        return <<<'HTML'
             <script>
                 jQuery(document).ready(function($) {
                     $("form").addClass("row mx-3");
                     $("form > div.form-group").addClass("{{ $class }}");
                 });
             </script>
-        blade;
+        HTML;
     }
 }

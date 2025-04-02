@@ -66,10 +66,10 @@ class EditButton extends Component
             return '';
         }
 
-        return <<<'blade'
+        return <<<'BLADE'
             <a href="{{ $url }}" class="btn btn-warning">
                 <i class="fa fa-edit"></i> {{ $text }}
             </a>
-        blade;
+        BLADE;
     }
 } 
