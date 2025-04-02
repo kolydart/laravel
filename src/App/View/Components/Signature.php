@@ -17,6 +17,7 @@ class Signature extends Component
      * @example usage in blade views:
      * ```blade
      * <x-kolydart::signature />
+     * <x-kolydart::signature :copyright="true" />
      * ```
      */
     public function __construct(bool $copyright = false)
@@ -27,14 +28,15 @@ class Signature extends Component
 
     public function render()
     {
-        return <<<'blade'
-            <div class="text-center text-muted">
-                {!! $developedBy !!}
-                @if($copyright)
-                    <br>
-                    &copy; {{ date('Y') }} - All rights reserved
-                @endif
+        return <<<'BLADE'
+            <div class="row d-flex {{ !$this->copyright ? 'justify-content-end' : 'justify-content-between' }}">
+                <span class="{{ !$this->copyright ? 'mr-1 opacity-50' : 'ml-1' }}">
+                    @if ($this->copyright)
+                        <strong>&copy;&nbsp;</strong>{{ date('Y') }}
+                    @endif
+                </span>
+                <span class="mr-1 opacity-50">{!! $developedBy !!}</span>
             </div>
-        blade;
+        BLADE;
     }
 } 
