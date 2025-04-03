@@ -36,10 +36,10 @@ class TestMessageDisplay extends MessageDisplay
         }
     }
     
-    public function render()
+    public function render(): ?string
     {
         if (empty($this->messages)) {
-            return '';
+            return null;
         }
         
         return 'Message display content would be rendered here';
