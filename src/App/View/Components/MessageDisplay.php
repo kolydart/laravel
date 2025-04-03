@@ -11,12 +11,15 @@ class MessageDisplay extends Component
     public $messages = [];
 
     /**
-     * Create a new component instance.
+     * display of various types of session messages
+     * retrieves warnings, errors and custom gw.message from Presenter::message()
      *
      * @example usage in blade views:
-     * ```blade
+     *
      * <x-kolydart::message-display />
-     * ```
+     *
+     * put in the admin/frontend layout file, next to @errors->all()
+     *
      */
 
     public function __construct()

@@ -9,20 +9,19 @@ class FormFieldsSize extends Component
     public $class;
 
     /**
-     * Create a new component instance.
      *
      * @param string $class The CSS class to apply to the form fields.
-     * 
-     * use 
+     *
+     *
      * <x-kolydart::form-fields-size />
-     * 
+     *
      * @example usage in blade views:
      * @section('scripts')
      *
      *   <x-kolydart::form-fields-size />
      *
      * @endsection
-     * 
+     *
      * This will render as:
      * ```html
      * <form class="row mx-3">
@@ -33,7 +32,7 @@ class FormFieldsSize extends Component
      *         <input type="email" name="email">
      *     </div>
      * </form>
-     * ``` 
+     * ```
      */
     public function __construct(string $class = 'col-md-6')
     {

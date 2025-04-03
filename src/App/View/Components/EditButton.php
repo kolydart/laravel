@@ -16,12 +16,11 @@ class EditButton extends Component
     public $show;
 
     /**
-     * Create a new component instance.
      *
      * @example usage in blade views:
-     * ```blade
+     *
      * <x-kolydart::edit-button />
-     * ```
+     *
      */
     public function __construct()
     {
@@ -45,7 +44,7 @@ class EditButton extends Component
         if (Route::getCurrentRoute()->getActionMethod() == 'show') {
 
             // Check if the controller exists and has an edit method
-            if (!is_object(request()->route()->controller) || 
+            if (!is_object(request()->route()->controller) ||
                 !(method_exists(get_class(request()->route()->controller), 'edit'))) {
                 return;
             }
@@ -73,4 +72,4 @@ class EditButton extends Component
             </a>
         BLADE;
     }
-} 
+}
