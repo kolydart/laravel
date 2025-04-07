@@ -126,4 +126,76 @@ trait HasLanguageFallback
     {
         return $this->getFallback('name');
     }
+    
+    /**
+     * Get the first secondary value for a field (one that is not the fallback value)
+     * 
+     * @param string $field Base field name
+     * @return mixed
+     */
+    public function getSecondary($field)
+    {
+        $locale = $this->getCurrentLocale();
+        $fallbackValue = $this->getFallback($field);
+        
+        try {
+            // Define field order based on locale
+            if ($locale === 'en') {
+                // For English locale, field order is: field_en (fallback) → field_alt → field
+                $fieldOrder = [
+                    "{$field}_alt",
+                    $field
+                ];
+            } else {
+                // For Greek/other locales, field order is: field (fallback) → field_en → field_alt
+                $fieldOrder = [
+                    "{$field}_en", 
+                    "{$field}_alt"
+                ];
+            }
+            
+            // Find the first non-null value that is not the fallback value
+            foreach ($fieldOrder as $attemptField) {
+                if (isset($this->$attemptField) && $this->$attemptField !== null && $this->$attemptField !== $fallbackValue) {
+                    return $this->$attemptField;
+                }
+            }
+            
+            // If no secondary value is found
+            return null;
+        } catch (\Throwable $e) {
+            // If any error occurs while accessing attributes, return null
+            return null;
+        }
+    }
+    
+    /**
+     * Get the first title secondary value (that is not the fallback value)
+     * 
+     * @return mixed
+     */
+    public function getTitleSecondaryAttribute()
+    {
+        return $this->getSecondary('title');
+    }
+    
+    /**
+     * Get the first description secondary value (that is not the fallback value)
+     * 
+     * @return mixed
+     */
+    public function getDescriptionSecondaryAttribute()
+    {
+        return $this->getSecondary('description');
+    }
+    
+    /**
+     * Get the first name secondary value (that is not the fallback value)
+     * 
+     * @return mixed
+     */
+    public function getNameSecondaryAttribute()
+    {
+        return $this->getSecondary('name');
+    }
 }
