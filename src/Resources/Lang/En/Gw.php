@@ -10,6 +10,7 @@ class Gw {
         'Dashboard'   => 'Home',
         'help'   => 'Help',
         'info'   => 'Information',
+        'results'   => 'Results',
     ];
 
 }
