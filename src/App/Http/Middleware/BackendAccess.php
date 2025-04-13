@@ -4,6 +4,7 @@ namespace Kolydart\Laravel\App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * Middleware to restrict access to backend routes
