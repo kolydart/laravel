@@ -28,7 +28,7 @@ class Signature extends Component
 
     public function render()
     {
-        return <<<'BLADE'
+        return <<<'HTML'
             <div class="row d-flex {{ !$copyright ? 'justify-content-end' : 'justify-content-between' }}">
                 <span class="{{ !$copyright ? 'mr-1 opacity-50' : 'ml-1' }}">
                     @if ($copyright)
@@ -37,6 +37,6 @@ class Signature extends Component
                 </span>
                 <span class="mr-1 opacity-50">{!! $developedBy !!}</span>
             </div>
-        BLADE;
+        HTML;
     }
 } 

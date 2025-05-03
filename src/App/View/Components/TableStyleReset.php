@@ -34,20 +34,20 @@ class TableStyleReset extends Component
      */
     public function render()
     {
-        return <<<'BLADE'
-<script>
-    jQuery(document).ready(function($) {
-        $("table.table-striped")
-            .removeClass('table-striped')
-            .removeClass('table-bordered')
-            // .addClass('table-responsive') /** breaks scroll right */
-            // .addClass('table-sm')
-            // .addClass('table-borderless')
-            // .addClass('table-hover')
-            ;
+        return <<<'HTML'
+            <script>
+                jQuery(document).ready(function($) {
+                    $("table.table-striped")
+                        .removeClass('table-striped')
+                        .removeClass('table-bordered')
+                        // .addClass('table-responsive') /** breaks scroll right */
+                        // .addClass('table-sm')
+                        // .addClass('table-borderless')
+                        // .addClass('table-hover')
+                        ;
 
-        });
-</script>
-BLADE;
+                    });
+            </script>
+        HTML;
     }
 }

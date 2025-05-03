@@ -34,13 +34,13 @@ class SaveButtonDangerToPrimary extends Component
      */
     public function render()
     {
-        return <<<'BLADE'
-<script>
-    jQuery(document).ready(function($) {
-        $("button.btn.btn-danger:contains('Save')").removeClass("btn-danger").addClass("btn-primary");
-        $("button.btn.btn-danger:contains('Αποθήκευση')").removeClass("btn-danger").addClass("btn-primary");
-    });
-</script>
-BLADE;
+        return <<<'HTML'
+            <script>
+                jQuery(document).ready(function($) {
+                    $("button.btn.btn-danger:contains('Save')").removeClass("btn-danger").addClass("btn-primary");
+                    $("button.btn.btn-danger:contains('Αποθήκευση')").removeClass("btn-danger").addClass("btn-primary");
+                });
+            </script>
+        HTML;
     }
 }
