@@ -3,6 +3,7 @@
 namespace Kolydart\Laravel\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Kolydart\Laravel\App\Console\Commands\InstallAuthGatesCommand;
 
 class KolydartServiceProvider extends ServiceProvider
 {
@@ -11,7 +12,10 @@ class KolydartServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Register commands
+        $this->commands([
+            InstallAuthGatesCommand::class,
+        ]);
     }
 
     /**
@@ -22,6 +26,13 @@ class KolydartServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../App/Http/Middleware' => app_path('Http/Middleware'),
         ], 'middleware');
+
+        // Load commands if running in console
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                InstallAuthGatesCommand::class,
+            ]);
+        }
 
         // Other publishes...
     }

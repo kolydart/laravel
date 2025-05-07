@@ -39,7 +39,50 @@ use App\Models\Role;
  * 3. Ensure your application has the appropriate Role and Permission models defined.
  *    The default namespace is App\Models\Role, but you may need to adjust the import statement
  *    at the top of this file to match your application's structure.
- *
+ * NEW:
+ * ### Installation
+
+ * You can install the middleware in two ways:
+ * 
+ * #### Option 1: Using the CLI Command (Recommended)
+ * 
+ * ```bash
+ * php artisan kolydart:install-auth-gates
+ * ```
+ * 
+ * This command will:
+ * - Create the middleware file at `app/Http/Middleware/AuthGates.php`
+ * - Set up the proper inheritance from the package
+ * 
+ * To force overwrite an existing file:
+ * 
+ * ```bash
+ * php artisan kolydart:install-auth-gates --force
+ * ```
+ * 
+ * #### Option 2: Using the Publish Command
+ * 
+ * ```bash
+ * php artisan vendor:publish --provider="Kolydart\Laravel\Providers\KolydartServiceProvider" --tag="middleware"
+ * ```
+ * 
+ * ### Register the Middleware
+ * 
+ * After installation, register the middleware in `app/Http/Kernel.php`:
+ * 
+ * ```php
+ * protected $middlewareGroups = [
+     * 'web' => [
+         * // ...
+         * \App\Http\Middleware\AuthGates::class,
+     * ],
+     * 'api' => [
+         * // ...
+         * \App\Http\Middleware\AuthGates::class,
+     * ],
+ * ];
+ * ```
+
  * Requirements:
  * - Role model with a 'permissions' relationship
  * - Permission model
