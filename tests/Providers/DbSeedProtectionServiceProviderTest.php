@@ -1,13 +1,13 @@
 <?php
 
-namespace Kolydart\Laravel\Tests\App\Providers;
+namespace Kolydart\Laravel\Tests\Providers;
 
 use Kolydart\Laravel\Tests\TestCase;
 use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\App;
 use Illuminate\Console\Command;
-use Kolydart\Laravel\App\Providers\DbSeedProtectionServiceProvider;
+use Kolydart\Laravel\Providers\DbSeedProtectionServiceProvider;
 use Mockery;
 use TypeError;
 use Symfony\Component\Console\Input\ArrayInput;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolydart\Laravel\App\Providers;
+namespace Kolydart\Laravel\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Console\Events\CommandStarting;
@@ -90,4 +90,4 @@ class DbSeedProtectionServiceProvider extends ServiceProvider
     {
         //
     }
-}
+} 
