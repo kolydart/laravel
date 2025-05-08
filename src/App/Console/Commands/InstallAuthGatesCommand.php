@@ -80,9 +80,9 @@ class InstallAuthGatesCommand extends Command
 
 namespace App\Http\Middleware;
 
-use Kolydart\Laravel\App\Http\Middleware\AuthGates as KolydartAuthGates;
+use Kolydart\Laravel\App\Http\Middleware\AccessControl;
 
-class AuthGates extends KolydartAuthGates
+class AuthGates extends AccessControl
 {
     // This class extends the AuthGates from the Kolydart\Laravel package
     // Any project-specific customizations can be added here
