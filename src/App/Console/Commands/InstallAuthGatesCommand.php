@@ -52,8 +52,19 @@ class InstallAuthGatesCommand extends Command
         $this->installAuthGatesMiddleware();
 
         $this->info('AuthGates middleware installed successfully.');
-        $this->comment('Please add the following middleware to your app/Http/Kernel.php file:');
-        $this->comment("\App\Http\Middleware\AuthGates::class,");
+        $this->comment('PLEASE ADD THE FOLLOWING MIDDLEWARE to your app/Http/Kernel.php file:');
+        $this->comment('\App\Http\Middleware\AuthGates::class,');
+        $this->comment('... to both "web" and "api" groups in $middlewareGroups');
+        //    Example for web group:
+        //    protected $middlewareGroups = [
+        //        'web' => [
+        //            // ... other middleware ...
+        //            \App\Http\Middleware\AuthGates::class,
+        //        ],
+        //        // ...
+        //    ];
+ 
+        $this->comment("Auto creating \App\Http\Middleware\AuthGates::class,");
 
         return 0;
     }
