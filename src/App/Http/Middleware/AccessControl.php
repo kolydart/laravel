@@ -131,8 +131,9 @@ class AccessControl
 
         foreach ($permissionsArray as $title => $roles) {
             Gate::define($title, function ($user = null) use ($roles) {
+                
+                // CAUTION; guest user
                 if (is_null($user)) {
-                    // Handle guest users
                     $guestRole = Role::where('title', 'Guest')->first();
                     return $guestRole && in_array($guestRole->id, $roles);
                 }
