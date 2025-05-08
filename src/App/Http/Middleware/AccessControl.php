@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Cache;
 // Note: The Role model should be imported from your application's namespace
 // Adjust this import based on your application's structure
-use App\Models\Role;
+use App\Role;
 
 /**
  * AccessControl Middleware
@@ -37,7 +37,7 @@ use App\Models\Role;
  *    ];
  *
  * 3. Ensure your application has the appropriate Role and Permission models defined.
- *    The default namespace is App\Models\Role, but you may need to adjust the import statement
+ *    The default namespace is App\Role, but you may need to adjust the import statement
  *    at the top of this file to match your application's structure.
  * NEW:
  * ### Installation
