@@ -40,7 +40,8 @@
         "laravel": {
             "providers": [
                 "Kolydart\\Laravel\\Providers\\DbSeedProtectionServiceProvider",
-                "Kolydart\\Laravel\\Providers\\ComponentsServiceProvider"
+                "Kolydart\\Laravel\\Providers\\ComponentsServiceProvider",
+                "Kolydart\\Laravel\\Providers\\KolydartServiceProvider"
             ]
         }
     }
