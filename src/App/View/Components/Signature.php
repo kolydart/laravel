@@ -29,7 +29,7 @@ class Signature extends Component
     public function render()
     {
         return <<<'HTML'
-            <div class="row d-flex {{ !$copyright ? 'justify-content-end' : 'justify-content-between' }}">
+            <div class="row d-flex d-print-none {{ !$copyright ? 'justify-content-end' : 'justify-content-between' }}">
                 <span class="{{ !$copyright ? 'mr-1 opacity-50' : 'ml-1' }}">
                     @if ($copyright)
                         <strong>&copy;&nbsp;</strong>{{ date('Y') }}
