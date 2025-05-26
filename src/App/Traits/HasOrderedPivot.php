@@ -28,11 +28,11 @@ trait HasOrderedPivot
      */
     public function orderedBelongsToMany(
         string $related,
-        string $table = null,
-        string $foreignPivotKey = null,
-        string $relatedPivotKey = null,
-        string $parentKey = null,
-        string $relatedKey = null,
+        ?string $table = null,
+        ?string $foreignPivotKey = null,
+        ?string $relatedPivotKey = null,
+        ?string $parentKey = null,
+        ?string $relatedKey = null,
         string $orderColumn = 'order'
     ): BelongsToMany {
         $relationship = $this->belongsToMany(
