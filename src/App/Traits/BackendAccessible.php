@@ -12,6 +12,10 @@ trait BackendAccessible
 {
     /**
      * Is this user authorized to view backend
+     * @example
+     * if (!\App\User::has_backend_access()) {
+     *     abort(403);
+     * }
      * @return boolean
      */
     public static function has_backend_access()
