@@ -47,13 +47,8 @@ class OrderedPivotServiceProvider extends ServiceProvider
             __DIR__ . '/../Resources/views/components' => resource_path('views/components/kolydart'),
         ], 'kolydart-ordered-pivot-views');
 
-        // Load views
+        // Load views from the package
         $this->loadViewsFrom(__DIR__ . '/../Resources/views', 'kolydart');
-
-        // Register Blade components
-        $this->loadViewComponentsAs('kolydart', [
-            'ordered-select' => \Kolydart\Laravel\View\Components\OrderedSelect::class,
-        ]);
     }
 
     /**

@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Blade;
 /**
  * Service provider for registering Blade components.
  *
- * Components are only registered for Laravel 8.0 and above.
+ * Components are registered for Laravel 8.0 and above.
  */
 class ComponentsServiceProvider extends ServiceProvider
 {
@@ -16,7 +16,7 @@ class ComponentsServiceProvider extends ServiceProvider
     {
         // Only register components for Laravel 8+
         if (version_compare($this->app->version(), '8.0.0', '>=')) {
-            // Register components
+            // Register components using the correct component namespace
             Blade::componentNamespace('Kolydart\\Laravel\\App\\View\\Components', 'kolydart');
         }
     }

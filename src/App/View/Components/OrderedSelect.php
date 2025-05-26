@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolydart\Laravel\View\Components;
+namespace Kolydart\Laravel\App\View\Components;
 
 use Illuminate\View\Component;
 
@@ -9,7 +9,7 @@ use Illuminate\View\Component;
  *
  * Blade component for creating Select2 dropdowns that preserve selection order.
  *
- * @package Kolydart\Laravel\View\Components
+ * @package Kolydart\Laravel\App\View\Components
  */
 class OrderedSelect extends Component
 {
@@ -21,7 +21,6 @@ class OrderedSelect extends Component
     public string $placeholder;
     public bool $required;
     public string $class;
-    public array $attributes;
 
     /**
      * Create a new component instance.
@@ -34,7 +33,6 @@ class OrderedSelect extends Component
      * @param string $placeholder
      * @param bool $required
      * @param string $class
-     * @param array $attributes
      */
     public function __construct(
         string $name,
@@ -44,8 +42,7 @@ class OrderedSelect extends Component
         bool $multiple = true,
         string $placeholder = 'Please select...',
         bool $required = false,
-        string $class = '',
-        array $attributes = []
+        string $class = ''
     ) {
         $this->name = $name;
         $this->id = $id ?? $name;
@@ -55,7 +52,6 @@ class OrderedSelect extends Component
         $this->placeholder = $placeholder;
         $this->required = $required;
         $this->class = $class;
-        $this->attributes = $attributes;
     }
 
     /**
