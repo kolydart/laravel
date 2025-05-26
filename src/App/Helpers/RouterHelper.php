@@ -12,7 +12,7 @@ class RouterHelper
 {
     /**
      * Auto create permission title for method
-     * 
+     *
      * @example display 'edit' route in Agent 'show' view
      *          RouterHelper::getPermissionTitle()
      *          returns 'agent_edit'
@@ -47,11 +47,11 @@ class RouterHelper
 
         return $result;
     }
-    
+
     /**
      * Replace method (last segment) in router name
-     * 
-     * @example RouterHelper::replaceMethodInRouterName() 
+     *
+     * @example RouterHelper::replaceMethodInRouterName()
      *          returns 'admin.agents.edit' when current route is 'admin.agents.show'
      * @param  string|null $methodName new router name
      * @param  string|null $routeName  route to be altered
@@ -71,4 +71,4 @@ class RouterHelper
 
         return $result;
     }
-} 
+}

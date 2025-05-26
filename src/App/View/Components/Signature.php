@@ -13,7 +13,7 @@ class Signature extends Component
      * Create a new component instance.
      *
      * @param bool $copyright Whether to show copyright notice
-     * 
+     *
      * @example usage in blade views:
      * ```blade
      * <x-kolydart::signature />
@@ -39,4 +39,4 @@ class Signature extends Component
             </div>
         HTML;
     }
-} 
+}

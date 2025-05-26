@@ -13,21 +13,21 @@ class TestMessageDisplay extends MessageDisplay
     public function __construct(array $sessionData = [])
     {
         $this->messages = [];
-        
+
         if (isset($sessionData['warning'])) {
             $this->messages[] = [
                 'type' => 'warning',
                 'text' => $sessionData['warning']
             ];
         }
-        
+
         if (isset($sessionData['error'])) {
             $this->messages[] = [
                 'type' => 'error',
                 'text' => $sessionData['error']
             ];
         }
-        
+
         if (isset($sessionData['gw_message_text'])) {
             $this->messages[] = [
                 'type' => $sessionData['gw_message_type'] ?? 'warning',
@@ -35,13 +35,13 @@ class TestMessageDisplay extends MessageDisplay
             ];
         }
     }
-    
+
     public function render(): ?string
     {
         if (empty($this->messages)) {
             return null;
         }
-        
+
         return 'Message display content would be rendered here';
     }
 }
@@ -54,7 +54,7 @@ class MessageDisplayTest extends TestCase
         $component = new TestMessageDisplay([
             'warning' => 'Test warning message'
         ]);
-        
+
         // Assert
         Assert::assertEquals('warning', $component->messages[0]['type']);
         Assert::assertEquals('Test warning message', $component->messages[0]['text']);
@@ -66,7 +66,7 @@ class MessageDisplayTest extends TestCase
         $component = new TestMessageDisplay([
             'error' => 'Test error message'
         ]);
-        
+
         // Assert
         Assert::assertEquals('error', $component->messages[0]['type']);
         Assert::assertEquals('Test error message', $component->messages[0]['text']);
@@ -79,7 +79,7 @@ class MessageDisplayTest extends TestCase
             'gw_message_text' => 'Custom message',
             'gw_message_type' => 'info'
         ]);
-        
+
         // Assert
         Assert::assertEquals('info', $component->messages[0]['type']);
         Assert::assertEquals('Custom message', $component->messages[0]['text']);
@@ -89,9 +89,9 @@ class MessageDisplayTest extends TestCase
     {
         // Arrange & Act
         $component = new TestMessageDisplay();
-        
+
         // Assert
         Assert::assertEmpty($component->messages);
         Assert::assertEquals('', $component->render());
     }
-} 
+}

@@ -42,7 +42,7 @@ class CalendarHelper{
 	}
 
 	/**
-	 * 
+	 *
 	 * @requires php-calendar extension
 	 * @param string $julian_date (ISO8601 formated)
 	 * https://www.php.net/manual/en/function.jdtogregorian.php#88469
@@ -54,6 +54,6 @@ class CalendarHelper{
 	    list($month, $day, $year) = explode('/', jdtogregorian($int));
 	    return sprintf('%04d-%02d-%02d', $year, $month, $day);
 	}
-	
+
 
 }

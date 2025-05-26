@@ -409,4 +409,4 @@ final class PgAuditLog extends PowerGridComponent
 
         ];
     }
-} 
+}

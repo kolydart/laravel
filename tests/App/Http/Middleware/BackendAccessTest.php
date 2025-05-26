@@ -24,13 +24,13 @@ class BackendAccessTest extends TestCase
     // {
     //     $middleware = new BackendAccess();
     //     $request = Request::create('/admin', 'GET');
-    //     
+    //
     //     // Mock Auth facade
     //     Auth::shouldReceive('check')->once()->andReturn(false);
-    //     
+    //
     //     $response = $middleware->handle($request, function() {});
-    //     
+    //
     //     $this->assertEquals(302, $response->getStatusCode());
     //     $this->assertEquals(route('login'), $response->headers->get('Location'));
     // }
-} 
+}

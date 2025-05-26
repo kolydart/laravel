@@ -26,7 +26,7 @@ final class PgAuditLog extends PowerGridComponent
     use WithExport;
 
     // passed model
-    public $model = null; 
+    public $model = null;
 
     public string $primaryKey = 'audit_logs.id';
     public string $sortField = 'audit_logs.created_at';
@@ -42,7 +42,7 @@ final class PgAuditLog extends PowerGridComponent
     public function setUp(): array
     {
         $this->showCheckBox();
-        
+
         $this->showFilters = true;
 
         if (\App::environment() == 'production') {
@@ -110,7 +110,7 @@ final class PgAuditLog extends PowerGridComponent
                     ->whereRaw('JSON_VALID(properties)')
                     ->where('audit_logs.properties->'.$fk, $model->id);
                 })
-                
+
                 // or model in Media
                 ->orWhere(function($query) use($model){
                     $query->where('audit_logs.subject_type', Media::class)
@@ -168,7 +168,7 @@ final class PgAuditLog extends PowerGridComponent
                         $model_type = $media->custom_properties['model_type'];
                         $model_id = $media->custom_properties['model_id'];
                         $route = 'admin.'.strtolower(class_basename($model_type)).'s.show';
-                        
+
                         if(route_exists($route)){
                             return '<a href="'.route($route, $model_id).'">'.$model->subject_id.'</a>';
                         }
@@ -179,7 +179,7 @@ final class PgAuditLog extends PowerGridComponent
                         $model_type = $model->properties['model_type'];
                         $model_id = $model->properties['model_id'];
                         $route = 'admin.'.strtolower(class_basename($model_type)).'s.show';
-                        
+
                         if(route_exists($route)){
                             return '<a href="'.route($route, $model_id).'">'.$model->subject_id.'</a>';
                         }
@@ -300,7 +300,7 @@ final class PgAuditLog extends PowerGridComponent
                 ->optionLabel('subject_clean')
                 ->optionValue('subject_type'),
 
-            Filter::multiSelect('description','description') 
+            Filter::multiSelect('description','description')
                 ->dataSource(AuditLog::query()
                     ->orderBy('description')
                     ->select('description')
@@ -340,7 +340,7 @@ final class PgAuditLog extends PowerGridComponent
                     return <<<HTML
                         <a href="$url" id="action_view_$model->id" class="btn btn-xs btn-primary" target="_blank">$slot</a>
                     HTML;
-                }),                
+                }),
         ];
     }
-} 
+}

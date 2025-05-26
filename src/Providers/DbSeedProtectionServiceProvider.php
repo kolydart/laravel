@@ -90,4 +90,4 @@ class DbSeedProtectionServiceProvider extends ServiceProvider
     {
         //
     }
-} 
+}

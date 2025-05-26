@@ -15,4 +15,4 @@ class UuidableTest extends TestCase
     }
 
     // More specific tests would require a Laravel environment with database
-} 
+}

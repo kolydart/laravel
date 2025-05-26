@@ -13,7 +13,7 @@ use Kolydart\Laravel\Resources\Lang\En\Gw;
  */
 class ISO8601 implements Rule
 {
-    /** 
+    /**
      * ISO8601, W3CDTF validation pattern
      * @see https://en.m.wikipedia.org/wiki/ISO_8601
      * @see http://www.w3.org/TR/NOTE-datetime
@@ -58,11 +58,11 @@ class ISO8601 implements Rule
         if (class_exists(Gw::class) && isset(Gw::$translation['iso8601'])) {
             return Gw::$translation['iso8601'];
         }
-        
+
         if (function_exists('trans') && ($translation = trans('gw.iso8601')) !== 'gw.iso8601') {
             return $translation;
         }
-        
+
         return 'The :attribute must be a valid ISO8601 date format.';
     }
-} 
+}

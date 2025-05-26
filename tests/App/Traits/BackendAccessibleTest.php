@@ -13,7 +13,7 @@ class BackendAccessibleTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         // Create a mock class using the trait
         $this->mock = new class {
             use BackendAccessible;
@@ -28,4 +28,4 @@ class BackendAccessibleTest extends TestCase
 
     // More specific tests would be added here
     // For a complete test, you'd need a Laravel testing environment with auth, roles, etc.
-} 
+}

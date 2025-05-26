@@ -234,16 +234,16 @@ class HasLanguageFallbackTest extends TestCase
         $model->title_en = 'English Title';
         $model->title_alt = 'Alternative Title';
 
-        // When exception is thrown, should default to 'el' locale behavior 
+        // When exception is thrown, should default to 'el' locale behavior
         // El cascade: title → title_en → title_alt
         $this->assertEquals('Greek Title', $model->title_fallback);
-        
+
         // Test fallback when primary is null
         $model->title = null;
         $this->assertEquals('English Title', $model->title_fallback);
-        
+
         // Test final fallback
-        $model->title_en = null; 
+        $model->title_en = null;
         $this->assertEquals('Alternative Title', $model->title_fallback);
     }
 
@@ -253,7 +253,7 @@ class HasLanguageFallbackTest extends TestCase
         // Create test model with Greek locale
         $model = new class extends Model {
             use HasLanguageFallback;
-            
+
             // Override the protected getCurrentLocale method to always return 'el'
             protected function getCurrentLocale()
             {
@@ -265,7 +265,7 @@ class HasLanguageFallbackTest extends TestCase
         $model->custom = 'Greek Custom';
         $model->custom_en = 'English Custom';
         $model->custom_alt = 'Alt Custom';
-        
+
         // Test Greek locale field order (custom → custom_en → custom_alt)
         $this->assertEquals('Greek Custom', $model->getFallback('custom'));
 
@@ -282,7 +282,7 @@ class HasLanguageFallbackTest extends TestCase
         // Create a new test model for English locale test
         $model = new class extends Model {
             use HasLanguageFallback;
-            
+
             // Override the protected getCurrentLocale method to always return 'en'
             protected function getCurrentLocale()
             {
@@ -294,7 +294,7 @@ class HasLanguageFallbackTest extends TestCase
         $model->custom = 'Greek Custom';
         $model->custom_en = 'English Custom';
         $model->custom_alt = 'Alt Custom';
-        
+
         // Test English locale field order (custom_en → custom_alt → custom)
         $this->assertEquals('English Custom', $model->getFallback('custom'));
 
@@ -308,7 +308,7 @@ class HasLanguageFallbackTest extends TestCase
         // Test with non-existent field
         $this->assertNull($model->getFallback('nonexistent'));
     }
-    
+
     /** @test */
     public function it_provides_secondary_values_for_greek_locale()
     {
@@ -336,7 +336,7 @@ class HasLanguageFallbackTest extends TestCase
         // Add alternative title - English should still be returned as it's found first
         $model->title_alt = 'Alternative Title';
         $this->assertEquals('English Title', $model->title_secondary);
-        
+
         // If we remove the English title, the alternative should be returned
         $model->title_en = null;
         $this->assertEquals('Alternative Title', $model->title_secondary);
@@ -369,7 +369,7 @@ class HasLanguageFallbackTest extends TestCase
         // Add Greek title - alternative should still be returned as it's found first in the English locale order
         $model->title = 'Greek Title';
         $this->assertEquals('Alternative Title', $model->title_secondary);
-        
+
         // If we remove the alternative title, the Greek title should be returned
         $model->title_alt = null;
         $this->assertEquals('Greek Title', $model->title_secondary);
@@ -381,7 +381,7 @@ class HasLanguageFallbackTest extends TestCase
         // Create test model with Greek locale
         $model = new class extends Model {
             use HasLanguageFallback;
-            
+
             // Override the protected getCurrentLocale method to always return 'el'
             protected function getCurrentLocale()
             {
@@ -403,7 +403,7 @@ class HasLanguageFallbackTest extends TestCase
         // Create a model with English locale
         $model = new class extends Model {
             use HasLanguageFallback;
-            
+
             // Override getCurrentLocale
             protected function getCurrentLocale()
             {
@@ -418,7 +418,7 @@ class HasLanguageFallbackTest extends TestCase
         // Add alternative value - should be secondary in English locale
         $model->custom_alt = 'Alt Custom';
         $this->assertEquals('Alt Custom', $model->getSecondary('custom'));
-        
+
         // Add Greek value - alternative should still be returned as it's found first in English locale
         $model->custom = 'Greek Custom';
         $this->assertEquals('Alt Custom', $model->getSecondary('custom'));
@@ -461,7 +461,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('English Title', $model->title_fallback);
         $this->assertNull($model->title_secondary);
     }
-    
+
     /** @test */
     public function secondary_values_are_strings_not_arrays()
     {
@@ -477,21 +477,21 @@ class HasLanguageFallbackTest extends TestCase
         $model->title = 'Greek Title';
         $model->title_en = 'English Title';
         $model->title_alt = 'Alternative Title';
-        
+
         // Test that secondary returns a string, not an array
         $this->assertIsString($model->title_secondary);
         $this->assertEquals('English Title', $model->title_secondary);
-        
+
         // Test for description
         $model->description = 'Greek Description';
         $model->description_en = 'English Description';
         $this->assertIsString($model->description_secondary);
         $this->assertEquals('English Description', $model->description_secondary);
-        
+
         // Test for name
         $model->name = 'Greek Name';
         $model->name_alt = 'Alternative Name';
         $this->assertIsString($model->name_secondary);
         $this->assertEquals('Alternative Name', $model->name_secondary);
     }
-} 
+}

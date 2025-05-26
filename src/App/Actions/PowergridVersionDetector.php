@@ -6,7 +6,7 @@ class PowergridVersionDetector
 {
     /**
      * Detect the PowerGrid version
-     * 
+     *
      * @return string 'v2', 'v3', or 'unknown'
      */
     public static function detect(): string
@@ -17,13 +17,13 @@ class PowergridVersionDetector
             if (class_exists('PowerComponents\LivewirePowerGrid\PowerGridFields')) {
                 return 'v3';
             }
-            
+
             // Check for v2-specific methods or classes
             if (class_exists('PowerComponents\LivewirePowerGrid\PowerGridEloquent')) {
                 return 'v2';
             }
         }
-        
+
         return 'unknown';
     }
-} 
+}

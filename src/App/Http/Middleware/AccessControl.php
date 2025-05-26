@@ -24,13 +24,13 @@ use Illuminate\Contracts\Foundation\Application;
  * ```bash
  * php artisan kolydart:install-auth-gates
  * ```
- * 
+ *
  * This command will:
  * - Create the middleware file at `app/Http/Middleware/AuthGates.php`
  * - Set up the proper inheritance from the package
- * 
+ *
  * To force overwrite an existing file:
- * 
+ *
  * ```bash
  * php artisan kolydart:install-auth-gates --force
  * ```
@@ -49,7 +49,7 @@ use Illuminate\Contracts\Foundation\Application;
  *
  * 3. Ensure your application has the appropriate Role and Permission models defined.
  *    The default namespace is App\Role, but the middleware will try to determine the correct namespace.
- 
+
  * Requirements:
  * - Role model with a 'permissions' relationship
  * - Permission model
@@ -84,7 +84,7 @@ class AccessControl
     public function __construct(?Application $app = null)
     {
         $this->app = $app ?: app();
-        
+
         // Try to determine the Role model class name
         // Default to App\Role if the class exists
         if (class_exists('App\Role')) {
@@ -140,7 +140,7 @@ class AccessControl
     {
         // Get the Role model class
         $roleModel = $this->roleModel;
-        
+
         // Fetch roles with permissions
         $roles = $roleModel::with('permissions')->get();
         $permissionsArray = [];

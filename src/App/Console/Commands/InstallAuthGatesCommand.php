@@ -63,7 +63,7 @@ class InstallAuthGatesCommand extends Command
         //        ],
         //        // ...
         //    ];
- 
+
         $this->comment("Auto creating \App\Http\Middleware\AuthGates::class,");
 
         return 0;

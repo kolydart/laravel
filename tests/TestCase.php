@@ -15,16 +15,16 @@ abstract class TestCase extends BaseTestCase
     protected function setUp(): void
     {
         parent::setUp();
-        
+
         $this->app = new Container;
         $this->app->instance('app', $this->app);
-        
+
         // Set up event dispatcher
         $dispatcher = new Dispatcher($this->app);
         $this->app->instance('events', $dispatcher);
         Event::clearResolvedInstances();
         Event::setFacadeApplication($this->app);
-        
+
         Facade::setFacadeApplication($this->app);
     }
 
@@ -34,7 +34,7 @@ abstract class TestCase extends BaseTestCase
         Facade::setFacadeApplication(null);
         Event::clearResolvedInstances();
         Event::setFacadeApplication(null);
-        
+
         parent::tearDown();
     }
-} 
+}

@@ -24,9 +24,9 @@ class AuditableTest extends TestCase
 
         // Test that the boot method exists
         $this->assertTrue(method_exists($mock, 'bootAuditable'));
-        
+
         // Test that the audit method exists (it's protected, so we need reflection)
         $reflection = new \ReflectionClass($mock);
         $this->assertTrue($reflection->hasMethod('audit'));
     }
-} 
+}

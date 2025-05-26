@@ -12,7 +12,7 @@ trait BackendAccessible
 {
     /**
      * Is this user authorized to view backend
-     * @return boolean 
+     * @return boolean
      */
     public static function has_backend_access()
     {
@@ -52,7 +52,7 @@ trait BackendAccessible
 
     /**
      * Check if current route is in admin group
-     * @return bool 
+     * @return bool
      * @note Do not test negative (!User::route_group_is_admin)
      *       in some cases there is no route (tests, factories, etc)
      */
@@ -67,7 +67,7 @@ trait BackendAccessible
 
     /**
      * Check if current route is in frontend group
-     * @return bool 
+     * @return bool
      * @note Do not test negative (!User::route_group_is_frontend)
      *       in some cases there is no route (tests, factories, etc)
      */
@@ -79,4 +79,4 @@ trait BackendAccessible
 
         return str(Route::currentRouteName())->before('.') == 'frontend';
     }
-} 
+}

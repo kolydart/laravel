@@ -21,7 +21,7 @@ class DbSeedProtectionServiceProviderTest extends TestCase
     {
         parent::setUp();
         $this->app->instance('app', $this->app);
-        
+
         // Set up event dispatcher
         $dispatcher = new Dispatcher($this->app);
         $this->app->instance('events', $dispatcher);
@@ -91,23 +91,23 @@ class DbSeedProtectionServiceProviderTest extends TestCase
 
         // Create the service provider
         $provider = new DbSeedProtectionServiceProvider($this->app);
-        
+
         // Make handleDbSeedCommand accessible
         $reflectionMethod = new ReflectionMethod(DbSeedProtectionServiceProvider::class, 'handleDbSeedCommand');
         $reflectionMethod->setAccessible(true);
-        
+
         // Create a partial mock to override getCallingCommand
         $mockProvider = Mockery::mock($provider)
             ->makePartial()
             ->shouldAllowMockingProtectedMethods();
-        
+
         // Mock the getCallingCommand method to return 'seed:static'
         $mockProvider->shouldReceive('getCallingCommand')
             ->andReturn('seed:static');
-            
+
         // Call the method with 'db:seed'
         $reflectionMethod->invoke($mockProvider, 'db:seed');
-        
+
         // If we reach here without an exception, the test passes
         $this->assertTrue(true);
     }
@@ -117,4 +117,4 @@ class DbSeedProtectionServiceProviderTest extends TestCase
         Mockery::close();
         parent::tearDown();
     }
-} 
+}

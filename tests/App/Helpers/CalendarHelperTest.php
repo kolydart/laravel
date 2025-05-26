@@ -14,7 +14,7 @@ class CalendarHelperTest extends TestCase
     {
         $gregorianDate = '2024-03-20';
         $julianDate = CalendarHelper::ISO8601toJD($gregorianDate);
-        
+
         // The expected Julian Day number for March 20, 2024
         $this->assertEquals(2460390, $julianDate);
     }
@@ -26,7 +26,7 @@ class CalendarHelperTest extends TestCase
     {
         $julianDate = '2024-03-20';
         $gregorianDate = CalendarHelper::JDtoISO8601($julianDate);
-        
+
         // March 20, 2024 in Julian calendar is April 2, 2024 in Gregorian calendar
         $this->assertEquals('2024-04-02', $gregorianDate);
     }
@@ -38,7 +38,7 @@ class CalendarHelperTest extends TestCase
     {
         $date = '2024-03-20';
         $result = CalendarHelper::getDates($date, false);
-        
+
         $this->assertIsArray($result);
         $this->assertArrayHasKey('julian', $result);
         $this->assertArrayHasKey('gregorian', $result);
@@ -53,7 +53,7 @@ class CalendarHelperTest extends TestCase
     {
         $date = '2024-03-20';
         $result = CalendarHelper::getDates($date, true);
-        
+
         $this->assertIsArray($result);
         $this->assertArrayHasKey('julian', $result);
         $this->assertArrayHasKey('gregorian', $result);
@@ -68,8 +68,8 @@ class CalendarHelperTest extends TestCase
     {
         $gregorianDate = '-0001-12-31';
         $julianDate = CalendarHelper::ISO8601toJD($gregorianDate);
-        
+
         // The expected Julian Day number for December 31, 1 BCE
         $this->assertEquals(1721059, $julianDate);
     }
-} 
+}

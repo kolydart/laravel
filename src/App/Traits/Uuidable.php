@@ -14,6 +14,6 @@ trait Uuidable
     {
         self::creating(function (Model $model) {
             $model->uuid = (string) Str::uuid();
-        }); 
+        });
     }
-} 
+}

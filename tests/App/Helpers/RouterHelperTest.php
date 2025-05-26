@@ -20,7 +20,7 @@ class RouterHelperTest extends TestCase
     {
         // Act
         $result = RouterHelper::getPermissionTitle('edit', 'admin.agents.show');
-        
+
         // Assert
         Assert::assertEquals('agent_edit', $result);
     }
@@ -29,7 +29,7 @@ class RouterHelperTest extends TestCase
     {
         // Act
         $result = RouterHelper::getPermissionTitle('delete', 'admin.agents.show');
-        
+
         // Assert
         Assert::assertEquals('agent_delete', $result);
     }
@@ -38,7 +38,7 @@ class RouterHelperTest extends TestCase
     {
         // Act
         $result = RouterHelper::getPermissionTitle('edit', 'admin.users.show');
-        
+
         // Assert
         Assert::assertEquals('user_edit', $result);
     }
@@ -47,7 +47,7 @@ class RouterHelperTest extends TestCase
     {
         // Act
         $result = RouterHelper::getPermissionTitle('create', 'admin.content-pages.index');
-        
+
         // Assert
         Assert::assertEquals('content_page_create', $result);
     }
@@ -56,7 +56,7 @@ class RouterHelperTest extends TestCase
     {
         // Act
         $result = RouterHelper::replaceMethodInRouterName('edit', 'admin.agents.show');
-        
+
         // Assert
         Assert::assertEquals('admin.agents.edit', $result);
     }
@@ -65,7 +65,7 @@ class RouterHelperTest extends TestCase
     {
         // Act
         $result = RouterHelper::replaceMethodInRouterName('delete', 'admin.agents.show');
-        
+
         // Assert
         Assert::assertEquals('admin.agents.delete', $result);
     }
@@ -74,8 +74,8 @@ class RouterHelperTest extends TestCase
     {
         // Act
         $result = RouterHelper::replaceMethodInRouterName('edit', 'admin.users.show');
-        
+
         // Assert
         Assert::assertEquals('admin.users.edit', $result);
     }
-} 
+}

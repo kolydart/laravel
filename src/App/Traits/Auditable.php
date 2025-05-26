@@ -13,10 +13,10 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
 /**
  * Trait for auditing model changes
  * use the trait on the model you want to audit
- * 
+ *
  * @example
  * use \Kolydart\Laravel\App\Traits\Auditable;
- * 
+ *
  */
 trait Auditable
 {
@@ -64,23 +64,23 @@ trait Auditable
         $properties = $model->toArray();
 
         // remove empty & irrelevant properties (created_at, updated_at, uuid)
-        
+
         $properties = collect($properties)->reject(function ($value, $key) {
-            return blank($value) 
-                || $key == 'created_at' 
+            return blank($value)
+                || $key == 'created_at'
                 || $key == 'updated_at'
                 || $key == 'uuid'
                 || $key == 'id'
                 ;
         })->all();
 
-        // remove properties nested array for related / medialibrary 
+        // remove properties nested array for related / medialibrary
         collect($properties)->each(function($value,$key) use(&$properties){
 
             // do not remove "properties" key
             if($key == 'custom_properties'){
-                
-                return; 
+
+                return;
 
             }
 
@@ -110,14 +110,14 @@ trait Auditable
             return;
 
             }
-            
+
         }
 
         ### clean properties ###
-        
+
         // empty in view|login|bitstream[item]
         if(
-            $description == 'view' 
+            $description == 'view'
             || $description == 'login'
             || ($description == 'bitstream' && $model::class != Media::class )
 
@@ -131,7 +131,7 @@ trait Auditable
         if(($description == 'bitstream' || $description == 'view') && $model::class == Media::class){
 
             $properties = collect($properties)->only('file_name');
-            
+
         }
 
         // Simple approach: Limit text fields to prevent "data too long" errors
