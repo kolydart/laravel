@@ -1,5 +1,7 @@
 # kolydart/laravel
 
+> **Document Purpose**: Technical documentation for Laravel package providing ordered pivot relationships management tools. Describes installation, usage, and API reference.
+
 A collection of Laravel helper classes including ordered pivot relationships functionality.
 
 ## Table of Contents
