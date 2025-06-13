@@ -42,7 +42,8 @@
                 "Kolydart\\Laravel\\Providers\\DbSeedProtectionServiceProvider",
                 "Kolydart\\Laravel\\Providers\\ComponentsServiceProvider",
                 "Kolydart\\Laravel\\Providers\\KolydartServiceProvider",
-                "Kolydart\\Laravel\\Providers\\OrderedPivotServiceProvider"
+                "Kolydart\\Laravel\\Providers\\OrderedPivotServiceProvider",
+                "Kolydart\\Laravel\\Providers\\RoleServiceProvider"
             ]
         }
     }
