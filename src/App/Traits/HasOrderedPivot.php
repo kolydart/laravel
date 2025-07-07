@@ -17,7 +17,7 @@ trait HasOrderedPivot
     /**
      * Define an ordered many-to-many relationship.
      *
-     * @param string $related The related model class
+     * @param string|null $related The related model class
      * @param string|null $table The pivot table name (optional)
      * @param string|null $foreignPivotKey The foreign key of the parent model (optional)
      * @param string|null $relatedPivotKey The foreign key of the related model (optional)
@@ -27,7 +27,7 @@ trait HasOrderedPivot
      * @return BelongsToMany
      */
     public function orderedBelongsToMany(
-        string $related,
+        ?string $related = null,
         ?string $table = null,
         ?string $foreignPivotKey = null,
         ?string $relatedPivotKey = null,
@@ -35,6 +35,13 @@ trait HasOrderedPivot
         ?string $relatedKey = null,
         string $orderColumn = 'order'
     ): BelongsToMany {
+        // Guard against calls without required parameters (e.g., from model:show command)
+        if ($related === null) {
+            // Return a dummy relationship for introspection purposes
+            // This allows model:show and similar commands to work without errors
+            return $this->belongsToMany(static::class, 'dummy_table')->withPivot($orderColumn);
+        }
+
         $relationship = $this->belongsToMany(
             $related,
             $table,
