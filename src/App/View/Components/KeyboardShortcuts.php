@@ -47,6 +47,12 @@ class KeyboardShortcuts extends Component
                     event.preventDefault(); // Prevent the default save dialog
                     document.querySelector('form button.btn[type="submit"]').click();
                 }
+
+                // Check for Cmd+E (Mac) or Ctrl+E (Windows/Linux)
+                if ((event.metaKey || event.ctrlKey) && event.key === 'e') {
+                    event.preventDefault(); // Prevent the default browser behavior
+                    document.querySelector('#gw-edit-button').click(); // Click the specified button
+                }
             });
             </script>
             HTML;

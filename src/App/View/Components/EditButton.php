@@ -67,7 +67,7 @@ class EditButton extends Component
 
         // Render the edit button
         return <<<'BLADE'
-            <a href="{{ $url }}" class="btn btn-warning">
+            <a href="{{ $url }}" class="btn btn-warning" id="gw-edit-button">
                 <i class="fa fa-edit"></i> {{ $text }}
             </a>
         BLADE;
