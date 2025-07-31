@@ -4,6 +4,7 @@ namespace Kolydart\Laravel\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Kolydart\Laravel\App\Console\Commands\InstallAuthGatesCommand;
+use Kolydart\Laravel\App\Console\Commands\MakeControllerTestCommand;
 
 class KolydartServiceProvider extends ServiceProvider
 {
@@ -15,6 +16,7 @@ class KolydartServiceProvider extends ServiceProvider
         // Register commands
         $this->commands([
             InstallAuthGatesCommand::class,
+            MakeControllerTestCommand::class,
         ]);
     }
 
@@ -31,6 +33,7 @@ class KolydartServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallAuthGatesCommand::class,
+                MakeControllerTestCommand::class,
             ]);
         }
 

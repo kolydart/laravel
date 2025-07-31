@@ -1,0 +1,110 @@
+<?php
+
+namespace {{ namespace }};
+
+use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Foundation\Testing\WithFaker;
+use Tests\TestCase;
+use PHPUnit\Framework\Attributes\Test;
+
+class {{ class }} extends TestCase
+{
+    use DatabaseTransactions;
+
+    var $Model = '{{ model }}';
+    var $table = '{{ table }}';
+    var $role = '{{ role }}';
+    var $route_path = "{{ route_path }}";
+
+    #[Test]
+    public function user_can_index_model(){
+
+        $user = $this->login_user($this->role);
+
+        $instance = $this->Model::factory(5)->create();
+
+        $response = $this->get(route("$this->route_path.index"));
+        $response->assertSessionHasNoErrors();
+        $response->assertSuccessful();
+
+    }
+
+
+    #[Test]
+    public function user_can_view_a_model(){
+
+        $user = $this->login_user($this->role);
+
+        $instance = $this->Model::factory()->create();
+
+        $response = $this->get(route("$this->route_path.show",$instance));
+        $response->assertSessionHasNoErrors();
+        $response->assertSuccessful();
+
+    }
+
+    #[Test]
+    public function user_can_store_a_model(){
+
+        $user = $this->login_user($this->role);
+
+        $instance = $this->Model::factory()->make();
+
+        $this->assertDatabaseCount($this->table,0);
+        $response = $this->post(route("$this->route_path.store"),$instance->toArray());
+        $this->assertDatabaseCount($this->table,1);
+
+        $response->assertSessionHasNoErrors();
+    }
+
+
+    #[Test]
+    public function user_can_edit_a_model(){
+
+        $user = $this->login_user($this->role);
+
+        $instance = $this->Model::factory()->create();
+
+        $response = $this->get(route("$this->route_path.edit",$instance));
+        $response->assertSessionHasNoErrors();
+        $response->assertSuccessful();
+
+    }
+
+    #[Test]
+    public function user_can_update_a_model(){
+
+        $user = $this->login_user($this->role);
+
+        $instance = $this->Model::factory()->create();
+
+        $response = $this->put(route("$this->route_path.update",$instance),$instance->toArray());
+
+        $freshInstance = $instance->fresh();
+
+        $instanceAttrs = array_filter($instance->getAttributes());
+        $freshAttrs = array_filter($freshInstance->getAttributes());
+
+        unset($instanceAttrs['updated_at'], $freshAttrs['updated_at']);
+
+        $this->assertEquals($instanceAttrs, $freshAttrs);
+        $this->assertDatabaseCount($this->table,1);
+        $response->assertSessionHasNoErrors();
+    }
+
+
+    #[Test]
+    public function user_can_delete_a_model(){
+
+        $user = $this->login_user($this->role);
+
+        $instance = $this->Model::factory()->create();
+
+        $response = $this->delete(route("$this->route_path.destroy",$instance));
+
+        $this->assertSoftDeleted($instance);
+
+        $response->assertSessionHasNoErrors();
+    }
+}
