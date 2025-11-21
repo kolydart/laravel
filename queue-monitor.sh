@@ -142,6 +142,24 @@ get_recent_failed_jobs() {
     " 2>/dev/null | grep -v "^$"
 }
 
+# Function to get currently running job from MySQL database
+get_current_running_job() {
+    ${LARAVEL_COMMAND} tinker --execute="
+    \$job = DB::table('jobs')
+        ->where('queue', '${QUEUE_NAME}')
+        ->whereNotNull('reserved_at')
+        ->orderBy('reserved_at', 'desc')
+        ->first();
+    if (\$job) {
+        \$payload = json_decode(\$job->payload, true);
+        \$jobClass = \$payload['displayName'] ?? 'Unknown';
+        \$attempts = \$job->attempts ?? 0;
+        \$reservedAt = date('Y-m-d H:i:s', \$job->reserved_at);
+        echo \$job->id . '|' . \$jobClass . '|' . \$attempts . '|' . \$reservedAt . PHP_EOL;
+    }
+    " 2>/dev/null | grep -v "^$"
+}
+
 # Function to display header
 display_header() {
     local inner_width=77 # Width inside the borders
@@ -223,6 +241,24 @@ display_stats() {
     echo ""
 }
 
+# Function to display currently running job
+display_current_running_job() {
+    echo -e "${YELLOW}Currently Running Job:${NC}"
+
+    local running_job=$(get_current_running_job)
+    if [ -z "$running_job" ]; then
+        echo -e "${GREEN}No job currently running${NC}"
+    else
+        echo -e "${CYAN}ID    | Job Class                    | Attempts | Reserved At${NC}"
+        echo "------|------------------------------|----------|--------------------"
+        while IFS='|' read -r id class attempts reserved_at; do
+            printf "${BLUE}%-5s${NC} | %-28s | %-8s | %s\n" \
+                "$id" "$(echo $class | cut -c1-28)" "$attempts" "$reserved_at"
+        done <<< "$running_job"
+    fi
+    echo ""
+}
+
 # Function to display recent jobs from MySQL
 display_recent_jobs() {
     echo -e "${YELLOW}Recent Jobs (Last 5 from '${QUEUE_NAME}' queue):${NC}"
@@ -270,11 +306,10 @@ display_help() {
     echo "  r, refresh - Refresh now"
     echo "  f, failed  - Show all failed jobs"
     echo "  c, clear   - Clear failed jobs (with confirmation)"
-    echo "  w, worker  - Start queue worker"
     echo "  s, status  - Show queue status"
     echo "  h, help    - Show this help"
     echo ""
-    echo -e "${YELLOW}Auto-refresh every ${REFRESH_INTERVAL} seconds. Press any key to refresh manually.${NC}"
+    echo -e "${YELLOW}Press any key to refresh manually.${NC}"
     echo ""
 }
 
@@ -332,12 +367,13 @@ monitor_queue() {
         clear_screen
         display_header
         display_stats
+        display_current_running_job
         display_recent_jobs
         display_failed_jobs
         display_help
 
-        # Wait for input or timeout
-        read -t $REFRESH_INTERVAL -n 1 input
+        # Wait for input (no auto-refresh)
+        read -n 1 input
 
         case "$input" in
             q|Q)
@@ -352,9 +388,6 @@ monitor_queue() {
                 ;;
             c|C)
                 clear_failed_jobs
-                ;;
-            w|W)
-                start_queue_worker
                 ;;
             s|S)
                 show_queue_status
