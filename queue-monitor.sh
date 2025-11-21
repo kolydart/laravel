@@ -153,9 +153,10 @@ get_current_running_job() {
     if (\$job) {
         \$payload = json_decode(\$job->payload, true);
         \$jobClass = \$payload['displayName'] ?? 'Unknown';
+        \$uuid = \$payload['uuid'] ?? 'N/A';
         \$attempts = \$job->attempts ?? 0;
         \$reservedAt = date('Y-m-d H:i:s', \$job->reserved_at);
-        echo \$job->id . '|' . \$jobClass . '|' . \$attempts . '|' . \$reservedAt . PHP_EOL;
+        echo \$job->id . '|' . \$uuid . '|' . \$jobClass . '|' . \$attempts . '|' . \$reservedAt . PHP_EOL;
     }
     " 2>/dev/null | grep -v "^$"
 }
@@ -249,11 +250,11 @@ display_current_running_job() {
     if [ -z "$running_job" ]; then
         echo -e "${GREEN}No job currently running${NC}"
     else
-        echo -e "${CYAN}ID    | Job Class                    | Attempts | Reserved At${NC}"
-        echo "------|------------------------------|----------|--------------------"
-        while IFS='|' read -r id class attempts reserved_at; do
-            printf "${BLUE}%-5s${NC} | %-28s | %-8s | %s\n" \
-                "$id" "$(echo $class | cut -c1-28)" "$attempts" "$reserved_at"
+        echo -e "${CYAN}ID    | UUID                                 | Job Class                    | Attempts | Reserved At${NC}"
+        echo "------|--------------------------------------|------------------------------|----------|--------------------"
+        while IFS='|' read -r id uuid class attempts reserved_at; do
+            printf "${BLUE}%-5s${NC} | %-36s | %-28s | %-8s | %s\n" \
+                "$id" "$uuid" "$(echo $class | cut -c1-28)" "$attempts" "$reserved_at"
         done <<< "$running_job"
     fi
     echo ""
