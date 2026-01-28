@@ -13,6 +13,10 @@ class KolydartServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->mergeConfigFrom(
+            __DIR__.'/../config/kolydart.php', 'kolydart'
+        );
+
         // Register commands
         $this->commands([
             InstallAuthGatesCommand::class,
@@ -28,6 +32,16 @@ class KolydartServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__.'/../App/Http/Middleware' => app_path('Http/Middleware'),
         ], 'middleware');
+
+        $this->publishes([
+            __DIR__.'/../config/kolydart.php' => config_path('kolydart.php'),
+        ], 'config');
+
+        // Register Impersonate listener
+        \Illuminate\Support\Facades\Event::listen(
+            \Illuminate\Auth\Events\Login::class,
+            \Kolydart\Laravel\App\Listeners\ImpersonateUser::class
+        );
 
         // Load commands if running in console
         if ($this->app->runningInConsole()) {
