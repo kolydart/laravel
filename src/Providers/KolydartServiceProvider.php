@@ -5,6 +5,7 @@ namespace Kolydart\Laravel\Providers;
 use Illuminate\Support\ServiceProvider;
 use Kolydart\Laravel\App\Console\Commands\InstallAuthGatesCommand;
 use Kolydart\Laravel\App\Console\Commands\MakeControllerTestCommand;
+use Kolydart\Laravel\App\Console\Commands\GenerateErdCommand;
 
 class KolydartServiceProvider extends ServiceProvider
 {
@@ -48,7 +49,12 @@ class KolydartServiceProvider extends ServiceProvider
             $this->commands([
                 InstallAuthGatesCommand::class,
                 MakeControllerTestCommand::class,
+                GenerateErdCommand::class,
             ]);
+
+            $this->publishes([
+                __DIR__.'/../config/erd-generator.php' => config_path('erd-generator.php'),
+            ], 'erd-generator-config');
         }
 
         // Other publishes...
