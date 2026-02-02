@@ -175,6 +175,16 @@ HELP;
             $this->info("ERD generated successfully: {$outputPath}");
             $this->info("Tables processed: " . count($schema['tables']));
 
+            $this->line('');
+            $groupedPath = str_replace('.md', '-grouped.md', $outputPath);
+
+            if (File::exists($groupedPath)) {
+                $this->info("Grouped diagram detected: {$groupedPath}");
+                $this->line("Tip: Ask me (AI) to \"update this diagram based on latest git changes (staged or working directory)\".");
+            } else {
+                $this->info("Tip: You can ask me (AI) to \"group tables by functionality (e.g., 'Auth', 'Orders') to optimize the diagram layout and improve readability\".");
+            }
+
             return self::SUCCESS;
 
         } catch (\Exception $e) {
@@ -217,7 +227,7 @@ HELP;
 
                 $columns[] = [
                     'name' => $column->getName(),
-                    'type' => $column->getType()::class,
+                    'type' => get_class($column->getType()),
                     'nullable' => !$column->getNotnull(),
                     'default' => $column->getDefault(),
                     'autoIncrement' => $column->getAutoincrement(),
@@ -400,16 +410,35 @@ HELP;
     {
         $shortType = strtolower(class_basename($type));
 
-        return match (true) {
-            str_contains($shortType, 'integer') || str_contains($shortType, 'bigint') || str_contains($shortType, 'smallint') => 'int',
-            str_contains($shortType, 'string') || str_contains($shortType, 'text') => 'string',
-            str_contains($shortType, 'decimal') || str_contains($shortType, 'float') || str_contains($shortType, 'double') => 'decimal',
-            str_contains($shortType, 'boolean') => 'boolean',
-            str_contains($shortType, 'datetime') || str_contains($shortType, 'timestamp') => 'datetime',
-            str_contains($shortType, 'date') => 'date',
-            str_contains($shortType, 'time') => 'time',
-            default => 'string',
-        };
+        if (strpos($shortType, 'integer') !== false || strpos($shortType, 'bigint') !== false || strpos($shortType, 'smallint') !== false) {
+            return 'int';
+        }
+
+        if (strpos($shortType, 'string') !== false || strpos($shortType, 'text') !== false) {
+            return 'string';
+        }
+
+        if (strpos($shortType, 'decimal') !== false || strpos($shortType, 'float') !== false || strpos($shortType, 'double') !== false) {
+            return 'decimal';
+        }
+
+        if (strpos($shortType, 'boolean') !== false) {
+            return 'boolean';
+        }
+
+        if (strpos($shortType, 'datetime') !== false || strpos($shortType, 'timestamp') !== false) {
+            return 'datetime';
+        }
+
+        if (strpos($shortType, 'date') !== false) {
+            return 'date';
+        }
+
+        if (strpos($shortType, 'time') !== false) {
+            return 'time';
+        }
+
+        return 'string';
     }
 
     protected function getColumnConstraints(array $column, array $tableData): string
