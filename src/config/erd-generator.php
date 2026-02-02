@@ -43,8 +43,14 @@ return [
     |
     */
     'ignored_tables' => [
-        // 'users',
-        // 'jobs',
+        'audit_logs',
+        'media',
+        'migrations',
+        'password_resets',
+        'permissions',
+        'personal_access_tokens',
+        'roles',
+        'users',
     ],
 
     /*

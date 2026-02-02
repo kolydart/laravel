@@ -198,7 +198,7 @@ HELP;
         $connection = DB::connection($database);
         $schema = [];
 
-        $schemaManager = $connection->getDoctrineSchemaManager();
+        $schemaManager = $this->getDoctrineSchemaManager($connection);
         $tables = $schemaManager->listTableNames();
 
         foreach ($tables as $tableName) {
@@ -245,6 +245,47 @@ HELP;
         }
 
         return $schema;
+    }
+
+    /**
+     * Get Doctrine Schema Manager compatible with both Laravel 10 and 11.
+     */
+    protected function getDoctrineSchemaManager($connection)
+    {
+        // Laravel < 11
+        if (version_compare(app()->version(), '11.0.0', '<')) {
+            return $connection->getDoctrineSchemaManager();
+        }
+
+        // Laravel 11+
+        $driverMap = [
+            'mysql' => 'pdo_mysql',
+            'pgsql' => 'pdo_pgsql',
+            'sqlite' => 'pdo_sqlite',
+            'sqlsrv' => 'pdo_sqlsrv',
+        ];
+
+        $driverName = $connection->getDriverName();
+        $doctrineDriver = $driverMap[$driverName] ?? 'pdo_mysql';
+
+        $config = $connection->getConfig();
+
+        $params = [
+            'pdo' => $connection->getPdo(),
+            'dbname' => $config['database'] ?? null,
+            'driver' => $doctrineDriver,
+            'user' => $config['username'] ?? null,
+            'password' => $config['password'] ?? null,
+            'host' => $config['host'] ?? null,
+            'port' => $config['port'] ?? null,
+        ];
+
+        // Ensure we don't pass nulls if keys are missing, as it might confuse Doctrine
+        $params = array_filter($params, fn($value) => !is_null($value));
+
+        $doctrineConnection = \Doctrine\DBAL\DriverManager::getConnection($params);
+
+        return $doctrineConnection->createSchemaManager();
     }
 
     protected function simplifySchema(array $schema): array
