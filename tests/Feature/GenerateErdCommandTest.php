@@ -106,7 +106,7 @@ class GenerateErdCommandTest extends TestCase
         $expected = [
             'created_at',
             'updated_at',
-            'deleted_at',
+            // 'deleted_at',
         ];
 
         foreach ($expected as $table) {

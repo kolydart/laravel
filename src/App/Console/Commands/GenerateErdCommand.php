@@ -37,6 +37,33 @@ class GenerateErdCommand extends Command
     protected const DEFAULT_FONT_SIZE = '24px';
 
     /**
+     * Default tables to ignore.
+     *
+     * @var array
+     */
+    protected $defaultIgnoredTables = [
+        'audit_logs',
+        'media',
+        'migrations',
+        'password_resets',
+        'permissions',
+        'personal_access_tokens',
+        'roles',
+        'users',
+    ];
+
+    /**
+     * Default columns to ignore.
+     *
+     * @var array
+     */
+    protected $defaultIgnoredColumns = [
+        'created_at',
+        'updated_at',
+        // 'deleted_at',
+    ];
+
+    /**
      * The console command help text.
      *
      * @var string
@@ -76,31 +103,6 @@ Examples:
   php artisan erd:generate --raw-relationships --ignore=jobs
   php artisan erd:generate --output=docs/schema.md --font-size=20px
 HELP;
-
-    /**
-     * Default tables to ignore.
-     *
-     * @var array
-     */
-    protected $defaultIgnoredTables = [
-        'migrations',
-        'password_resets',
-        'permissions',
-        'personal_access_tokens',
-        'roles',
-        'users',
-    ];
-
-    /**
-     * Default columns to ignore.
-     *
-     * @var array
-     */
-    protected $defaultIgnoredColumns = [
-        'created_at',
-        'updated_at',
-        'deleted_at',
-    ];
 
     /**
      * Execute the console command.
