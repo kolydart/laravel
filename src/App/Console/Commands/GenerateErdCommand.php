@@ -358,7 +358,7 @@ HELP;
         $mermaid .= "erDiagram\n";
 
         foreach ($schema['tables'] as $tableName => $tableData) {
-            $mermaid .= "    {$tableName}[\"**{$tableName}**\"] {\n";
+            $mermaid .= "    {$tableName} {\n";
 
             foreach ($tableData['columns'] as $column) {
                 $type = $this->mapColumnType($column['type']);
