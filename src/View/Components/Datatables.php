@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolydart\Laravel\App\View\Components;
+namespace Kolydart\Laravel\View\Components;
 
 use Illuminate\View\Component;
 

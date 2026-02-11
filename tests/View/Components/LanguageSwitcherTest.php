@@ -1,8 +1,8 @@
 <?php
 
-namespace Kolydart\Laravel\Tests\App\View\Components;
+namespace Kolydart\Laravel\Tests\View\Components;
 
-use Kolydart\Laravel\App\View\Components\LanguageSwitcher;
+use Kolydart\Laravel\View\Components\LanguageSwitcher;
 use Kolydart\Laravel\Tests\TestCase;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\App;

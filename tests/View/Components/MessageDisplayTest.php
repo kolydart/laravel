@@ -1,8 +1,8 @@
 <?php
 
-namespace Kolydart\Laravel\Tests\App\View\Components;
+namespace Kolydart\Laravel\Tests\View\Components;
 
-use Kolydart\Laravel\App\View\Components\MessageDisplay;
+use Kolydart\Laravel\View\Components\MessageDisplay;
 use Kolydart\Laravel\Tests\TestCase;
 use PHPUnit\Framework\Assert;
 use Mockery;

@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolydart\Laravel\App\View\Components;
+namespace Kolydart\Laravel\View\Components;
 
 use Illuminate\View\Component;
 
@@ -43,9 +43,17 @@ class FormFieldsSize extends Component
     {
         return <<<'HTML'
             <script>
-                jQuery(document).ready(function($) {
-                    $("form").addClass("row mx-3");
-                    $("form > div.form-group").addClass("{{ $class }}");
+            <script>
+                document.addEventListener('DOMContentLoaded', function() {
+                    var forms = document.querySelectorAll('form');
+                    Array.prototype.forEach.call(forms, function(form) {
+                        form.classList.add('row', 'mx-3');
+                        var groups = form.querySelectorAll(':scope > div.form-group');
+                        Array.prototype.forEach.call(groups, function(group) {
+                            group.classList.add("{{ $class }}");
+                        });
+                    });
+                });
                 });
             </script>
         HTML;

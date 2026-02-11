@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolydart\Laravel\App\View\Components;
+namespace Kolydart\Laravel\View\Components;
 
 use Illuminate\View\Component;
 
@@ -36,9 +36,16 @@ class SaveButtonDangerToPrimary extends Component
     {
         return <<<'HTML'
             <script>
-                jQuery(document).ready(function($) {
-                    $("button.btn.btn-danger:contains('Save')").removeClass("btn-danger").addClass("btn-primary");
-                    $("button.btn.btn-danger:contains('Αποθήκευση')").removeClass("btn-danger").addClass("btn-primary");
+                document.addEventListener('DOMContentLoaded', function() {
+                    var buttons = document.querySelectorAll('button.btn.btn-danger');
+                    Array.prototype.forEach.call(buttons, function(btn) {
+                        var text = btn.innerText || btn.textContent;
+                        text = text.trim();
+                        if (text === 'Save' || text === 'Αποθήκευση') {
+                            btn.classList.remove('btn-danger');
+                            btn.classList.add('btn-primary');
+                        }
+                    });
                 });
             </script>
         HTML;

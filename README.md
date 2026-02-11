@@ -215,6 +215,25 @@ Reusable component for ordered select fields.
 
 Advanced component with dynamic option addition and real-time updates.
 
+#### 7. Blade Component: `<x-kolydart::table-hide-empty-rows>`
+
+Hides table rows that contain empty cells. Useful for cleaning up tables with sparse data.
+
+**Properties:**
+- `excludedTables`: CSS selector for tables to exclude (default: `.power-grid-table`)
+- `excludedContainers`: CSS selector for containers to exclude (default: `div.tab-pane`)
+
+**Usage:**
+```blade
+<x-kolydart::table-hide-empty-rows />
+
+{{-- With custom exclusions --}}
+<x-kolydart::table-hide-empty-rows
+    excludedTables=".my-custom-table"
+    excludedContainers=".modal-body"
+/>
+```
+
 ### Usage Examples
 
 #### Example 1: Basic Paper-User Relationship
@@ -537,6 +556,120 @@ $('#users').on('select2:select', function (e) {
     :options="$users"
     :selected="$selectedUsers ?? []"
 />
+```
+
+
+## Additional Components
+
+### 1. AdminLteDevColor
+
+Changes the AdminLTE sidebar color to a distinct blue (`#001FA1`) when the application environment is `local`. This helps distinguish development from production environments.
+
+**Usage:**
+```blade
+<x-kolydart::admin-lte-dev-color />
+```
+
+### 2. Datatables
+
+Auto-focuses the DataTables search input and hides the bulk delete button on index pages.
+
+**Usage:**
+```blade
+<x-kolydart::datatables />
+```
+
+### 3. Edit Button
+
+Raenders an "Edit" button if the current user has permission and the corresponding `edit` route exists for the resource.
+
+**Usage:**
+```blade
+<x-kolydart::edit-button />
+```
+It automatically detects the current resource route (e.g., changes `show` to `edit`) and checks permissions using `Gate`.
+
+### 4. Form Fields Size
+
+Adds Bootstrap classes to form fields to standardize their size and layout.
+
+**Usage:**
+```blade
+<x-kolydart::form-fields-size />
+```
+
+**Custom Class:**
+```blade
+<x-kolydart::form-fields-size class="col-md-4" />
+```
+
+### 5. Keyboard Shortcuts
+
+Adds keyboard shortcuts for common actions:
+- `Cmd/Ctrl + S`: Submit the form (Save).
+- `Cmd/Ctrl + E`: Click the edit button.
+
+**Usage:**
+```blade
+<x-kolydart::keyboard-shortcuts />
+```
+
+### 6. Language Switcher
+
+Displays a link to switch key language. Requires `panel.available_languages` config.
+
+**Usage:**
+```blade
+<x-kolydart::language-switcher />
+```
+
+**Configuration (`config/panel.php`):**
+```php
+'available_languages' => [
+    'en' => 'English',
+    'el' => 'Greek',
+],
+```
+
+### 7. Message Display
+
+Displays session messages returned by the controller (success, warning, error).
+
+**Usage:**
+```blade
+<x-kolydart::message-display />
+```
+
+### 8. Save Button Danger To Primary
+
+Automatically changes "Save" buttons with `btn-danger` class to `btn-primary`. Useful for standardizing button styles.
+
+**Usage:**
+```blade
+<x-kolydart::save-button-danger-to-primary />
+```
+
+### 9. Signature
+
+Displays a "developed by kolydart" signature.
+
+**Usage:**
+```blade
+<x-kolydart::signature />
+```
+
+**With Copyright:**
+```blade
+<x-kolydart::signature :copyright="true" />
+```
+
+### 10. Table Style Reset
+
+Resets Bootstrap table styles by removing `table-striped` and `table-bordered` classes.
+
+**Usage:**
+```blade
+<x-kolydart::table-style-reset />
 ```
 
 ## Testing

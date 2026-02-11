@@ -20,7 +20,7 @@ class ComponentsServiceProvider extends ServiceProvider
         // Only register components for Laravel 8+
         if (version_compare($this->app->version(), '8.0.0', '>=')) {
             // Register components using the correct component namespace
-            Blade::componentNamespace('Kolydart\\Laravel\\App\\View\\Components', 'kolydart');
+            Blade::componentNamespace('Kolydart\\Laravel\\View\\Components', 'kolydart');
         }
     }
 

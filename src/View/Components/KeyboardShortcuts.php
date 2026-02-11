@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolydart\Laravel\App\View\Components;
+namespace Kolydart\Laravel\View\Components;
 
 use Illuminate\View\Component;
 use Illuminate\Support\HtmlString;
@@ -18,7 +18,7 @@ use Illuminate\Support\HtmlString;
  * - Primarily used for saving forms with Cmd+S or Ctrl+S instead of
  *   clicking the submit button.
  *
- * @package Kolydart\Laravel\App\View\Components
+ * @package Kolydart\Laravel\View\Components
  */
 class KeyboardShortcuts extends Component
 {

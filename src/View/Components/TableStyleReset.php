@@ -1,6 +1,6 @@
 <?php
 
-namespace Kolydart\Laravel\App\View\Components;
+namespace Kolydart\Laravel\View\Components;
 
 use Illuminate\View\Component;
 
@@ -36,17 +36,13 @@ class TableStyleReset extends Component
     {
         return <<<'HTML'
             <script>
-                jQuery(document).ready(function($) {
-                    $("table.table-striped")
-                        .removeClass('table-striped')
-                        .removeClass('table-bordered')
-                        // .addClass('table-responsive') /** breaks scroll right */
-                        // .addClass('table-sm')
-                        // .addClass('table-borderless')
-                        // .addClass('table-hover')
-                        ;
-
+                document.addEventListener('DOMContentLoaded', function() {
+                    var tables = document.querySelectorAll('table.table-striped');
+                    Array.prototype.forEach.call(tables, function(tbl) {
+                        tbl.classList.remove('table-striped');
+                        tbl.classList.remove('table-bordered');
                     });
+                });
             </script>
         HTML;
     }

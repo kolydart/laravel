@@ -1,8 +1,8 @@
 <?php
 
-namespace Kolydart\Laravel\Tests\App\View\Components;
+namespace Kolydart\Laravel\Tests\View\Components;
 
-use Kolydart\Laravel\App\View\Components\FormFieldsSize;
+use Kolydart\Laravel\View\Components\FormFieldsSize;
 use Kolydart\Laravel\Tests\TestCase;
 use PHPUnit\Framework\Assert;
 
@@ -33,8 +33,8 @@ class FormFieldsSizeTest extends TestCase
         $renderedView = $component->render();
 
         // Assert
-        Assert::assertStringContainsString('jQuery(document).ready', $renderedView);
-        Assert::assertStringContainsString('$("form").addClass("row mx-3")', $renderedView);
-        Assert::assertStringContainsString('$("form > div.form-group").addClass("{{ $class }}")', $renderedView);
+        Assert::assertStringContainsString('document.addEventListener', $renderedView);
+        Assert::assertStringContainsString("form.classList.add('row', 'mx-3')", $renderedView);
+        Assert::assertStringContainsString('group.classList.add("{{ $class }}")', $renderedView);
     }
 }
