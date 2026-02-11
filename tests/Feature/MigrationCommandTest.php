@@ -15,18 +15,10 @@ class MigrationCommandTest extends TestCase
     {
         parent::setUp();
         $this->files = new Filesystem();
-        $this->tempDir = sys_get_temp_dir() . '/test_migrations';
-
-        if (!$this->files->exists($this->tempDir)) {
-            $this->files->makeDirectory($this->tempDir, 0755, true);
-        }
     }
 
     protected function tearDown(): void
     {
-        if ($this->files->exists($this->tempDir)) {
-            $this->files->deleteDirectory($this->tempDir);
-        }
         parent::tearDown();
     }
 

@@ -43,7 +43,6 @@ class FormFieldsSize extends Component
     {
         return <<<'HTML'
             <script>
-            <script>
                 document.addEventListener('DOMContentLoaded', function() {
                     var forms = document.querySelectorAll('form');
                     Array.prototype.forEach.call(forms, function(form) {
@@ -53,7 +52,6 @@ class FormFieldsSize extends Component
                             group.classList.add("{{ $class }}");
                         });
                     });
-                });
                 });
             </script>
         HTML;
