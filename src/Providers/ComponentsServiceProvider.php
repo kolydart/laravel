@@ -14,6 +14,9 @@ class ComponentsServiceProvider extends ServiceProvider
 {
     public function boot()
     {
+        // Load views from the package
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'kolydart');
+
         // Only register components for Laravel 8+
         if (version_compare($this->app->version(), '8.0.0', '>=')) {
             // Register components using the correct component namespace
