@@ -93,7 +93,7 @@ class LanguageSwitcher extends Component
         }
 
         return <<<'BLADE'
-            <a class="{{ $class }}" href="{{ url()->current() }}?change_language={{ $langLocale }}">
+            <a class="{{ $class }}" href="{{ request()->fullUrlWithQuery(['change_language' => $langLocale]) }}">
                 <i class="fas fa-language"></i> {{ $langName }}
             </a>
         BLADE;
