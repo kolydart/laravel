@@ -51,6 +51,7 @@ use Illuminate\View\Component;
 class LanguageSwitcher extends Component
 {
     public $class;
+    public $mode;
     public $langLocale;
     public $langName;
     public $show;
@@ -59,10 +60,12 @@ class LanguageSwitcher extends Component
      * Create a new component instance.
      *
      * @param string $class CSS class for the language switcher link
+     * @param string $mode Mode to render ('link' or 'dropdown')
      */
-    public function __construct($class = 'dropdown-item')
+    public function __construct($class = 'dropdown-item', $mode = 'link')
     {
         $this->class = $class;
+        $this->mode = $mode;
         $this->show = false;
         $this->langLocale = null;
         $this->langName = null;
@@ -72,13 +75,19 @@ class LanguageSwitcher extends Component
             return;
         }
 
-        // Find the first language that is not the current locale
-        foreach(config('panel.available_languages') as $langLocale => $langName) {
-            if (app()->getLocale() != $langLocale) {
-                $this->langLocale = $langLocale;
-                $this->langName = $langName;
-                $this->show = true;
-                break; // Only show the first available language option
+        // Only show if there are multiple languages
+        if (count(config('panel.available_languages')) > 1) {
+            $this->show = true;
+        }
+
+        // For link mode, we need exactly one alternative language
+        if ($this->mode === 'link') {
+            foreach(config('panel.available_languages') as $langLocale => $langName) {
+                if (app()->getLocale() != $langLocale) {
+                    $this->langLocale = $langLocale;
+                    $this->langName = $langName;
+                    break; // Only show the first available language option
+                }
             }
         }
     }
@@ -92,10 +101,25 @@ class LanguageSwitcher extends Component
             return '';
         }
 
+        if ($this->mode === 'dropdown') {
+            return <<<'BLADE'
+            <li class="nav-item dropdown">
+                <a class="nav-link" data-toggle="dropdown" href="#">
+                    {{ strtoupper(app()->getLocale()) }}
+                </a>
+                <div class="dropdown-menu dropdown-menu-right">
+                    @foreach(config('panel.available_languages') as $locale => $name)
+                        <a class="{{ $class }}" href="{{ request()->fullUrlWithQuery(['change_language' => $locale]) }}">{{ strtoupper($locale) }} ({{ $name }})</a>
+                    @endforeach
+                </div>
+            </li>
+BLADE;
+        }
+
         return <<<'BLADE'
             <a class="{{ $class }}" href="{{ request()->fullUrlWithQuery(['change_language' => $langLocale]) }}">
                 <i class="fas fa-language"></i> {{ $langName }}
             </a>
-        BLADE;
+BLADE;
     }
 }
