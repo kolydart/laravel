@@ -17,6 +17,15 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @example
  * use \Kolydart\Laravel\App\Traits\Auditable;
  *
+ * @changelog
+ * 2026-03-16
+ * - Clear relations on cloned audit model (setRelations([])) to prevent
+ *   shallow-clone reference leaks from affecting the original model's
+ *   loaded relationships in downstream listeners.
+ * - Log non-"Data too long" exceptions instead of silently swallowing them,
+ *   so database connectivity, permission, or schema errors are visible in logs.
+ * - Simplify $subject_type assignment: remove redundant null checks around
+ *   get_class() since $model is type-hinted as Model and can never be null.
  */
 trait Auditable
 {
@@ -42,6 +51,7 @@ trait Auditable
             }
 
             $auditModel = clone $model;
+            $auditModel->setRelations([]);
             $auditModel->setRawAttributes(array_merge($changes, ['id' => $model->id]));
 
             self::audit('update', $auditModel);
@@ -92,8 +102,7 @@ trait Auditable
 
         });
 
-        // set subject_type to $model::class (null if not exists)
-        $subject_type = $model ? get_class($model) ?? null : null;
+        $subject_type = $model::class;
 
         // once per day: bitstream|view
         if($description == 'bitstream' || $description == 'view'){
@@ -153,7 +162,6 @@ trait Auditable
                 'host'         => request()->ip() ?? null,
             ]);
         } catch (\Exception $e) {
-            // If we still get an error, try with empty properties
             if (strpos($e->getMessage(), 'Data too long') !== false) {
                 AuditLog::create([
                     'description'  => $description,
@@ -163,6 +171,8 @@ trait Auditable
                     'properties'   => ['error' => 'Data too large to store'],
                     'host'         => request()->ip() ?? null,
                 ]);
+            } else {
+                throw $e;
             }
         }
     }
