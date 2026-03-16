@@ -41,9 +41,10 @@ trait Auditable
 
             }
 
-            $model->attributes = array_merge($changes, ['id' => $model->id]);
+            $auditModel = clone $model;
+            $auditModel->setRawAttributes(array_merge($changes, ['id' => $model->id]));
 
-            self::audit('update', $model);
+            self::audit('update', $auditModel);
         });
 
         static::deleted(function (Model $model) {
