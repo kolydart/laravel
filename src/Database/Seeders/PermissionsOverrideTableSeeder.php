@@ -4,7 +4,6 @@
 
 namespace Kolydart\Laravel\Database\Seeders;
 
-use App\Permission;
 use Illuminate\Database\Seeder;
 
 class PermissionsOverrideTableSeeder extends Seeder
@@ -17,6 +16,7 @@ class PermissionsOverrideTableSeeder extends Seeder
             [ 'id'    => 1003, 'title' => 'pulse_access', ],
         ];
 
-        Permission::upsert($permissions,['id'],['title']);
+        $Permission = class_exists('App\Models\Permission') ? 'App\Models\Permission' : 'App\Permission';
+        $Permission::upsert($permissions, ['id'], ['title']);
     }
 }

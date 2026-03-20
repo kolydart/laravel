@@ -2,8 +2,6 @@
 
 namespace Kolydart\Laravel\App\Livewire\V3;
 
-use App\AuditLog;
-use App\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use PowerComponents\LivewirePowerGrid\Button;
@@ -31,6 +29,16 @@ final class PgAuditLog extends PowerGridComponent
     public string $primaryKey = 'audit_logs.id';
     public string $sortField = 'audit_logs.created_at';
     public string $sortDirection = 'desc';
+
+    protected function auditLogModel(): string
+    {
+        return class_exists('App\Models\AuditLog') ? 'App\Models\AuditLog' : 'App\AuditLog';
+    }
+
+    protected function userModel(): string
+    {
+        return class_exists('App\Models\User') ? 'App\Models\User' : 'App\User';
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -79,11 +87,12 @@ final class PgAuditLog extends PowerGridComponent
     /**
     * PowerGrid datasource.
     *
-    * @return Builder<\App\AuditLog>
+    * @return Builder
     */
     public function datasource(): Builder
     {
-        $query = AuditLog::query()
+        $AuditLog = $this->auditLogModel();
+        $query = $AuditLog::query()
             ->leftJoin('users', 'audit_logs.user_id', '=', 'users.id')
             ->selectRaw("audit_logs.*")
             ->groupBy(['subject_id', 'subject_type', 'user_id', 'host', 'created_at', 'description'])
@@ -193,7 +202,8 @@ final class PgAuditLog extends PowerGridComponent
             })
             ->add('user_name', function($model){
                 if($model->user_id){
-                    $user = User::find($model->user_id);
+                    $User = $this->userModel();
+                    $user = $User::find($model->user_id);
                     return $user->name ?? $model->user_id;
                 }
                 return 'System';
@@ -280,10 +290,13 @@ final class PgAuditLog extends PowerGridComponent
      */
     public function filters(): array
     {
+        $AuditLog = $this->auditLogModel();
+        $User = $this->userModel();
+
         return [
             Filter::multiSelect('user_name', 'user_id')
                 ->dataSource(
-                    User::whereIn('id',AuditLog::whereNotNull('user_id')->distinct()->pluck('user_id')->toArray())
+                    $User::whereIn('id', $AuditLog::whereNotNull('user_id')->distinct()->pluck('user_id')->toArray())
                         ->select("id","name")
                         ->orderBy('name')
                         ->get()
@@ -292,7 +305,7 @@ final class PgAuditLog extends PowerGridComponent
                 ->optionLabel('name'),
 
             Filter::multiSelect('subject_type','subject_type')
-                ->dataSource(AuditLog::selectRaw('subject_type, SUBSTRING_INDEX(subject_type, "\\\", -1) AS subject_clean')
+                ->dataSource($AuditLog::selectRaw('subject_type, SUBSTRING_INDEX(subject_type, "\\\", -1) AS subject_clean')
                     ->distinct()
                     ->orderBy('subject_type')
                     ->get()
@@ -301,7 +314,7 @@ final class PgAuditLog extends PowerGridComponent
                 ->optionValue('subject_type'),
 
             Filter::multiSelect('description','description')
-                ->dataSource(AuditLog::query()
+                ->dataSource($AuditLog::query()
                     ->orderBy('description')
                     ->select('description')
                     ->orderBy('description')
@@ -334,7 +347,7 @@ final class PgAuditLog extends PowerGridComponent
        return [
             Button::add('view')
                 ->can(\Gate::allows('audit_log_show'))
-                ->render(function (AuditLog $model) {
+                ->render(function ($model) {
                     $slot = trans('global.view');
                     $url  = route('admin.audit-logs.show',$model);
                     return <<<HTML

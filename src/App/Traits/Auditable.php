@@ -3,7 +3,6 @@
 namespace Kolydart\Laravel\App\Traits;
 
 
-use App\AuditLog;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
@@ -18,6 +17,10 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * use \Kolydart\Laravel\App\Traits\Auditable;
  *
  * @changelog
+ * 2026-03-20
+ * - Dynamic AuditLog namespace resolution via getAuditLogModel(): supports
+ *   both App\AuditLog and App\Models\AuditLog installations.
+ *
  * 2026-03-16
  * - Clear relations on cloned audit model (setRelations([])) to prevent
  *   shallow-clone reference leaks from affecting the original model's
@@ -29,6 +32,11 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  */
 trait Auditable
 {
+    protected static function getAuditLogModel(): string
+    {
+        return class_exists('App\Models\AuditLog') ? 'App\Models\AuditLog' : 'App\AuditLog';
+    }
+
     public static function bootAuditable()
     {
         static::created(function (Model $model) {
@@ -104,10 +112,12 @@ trait Auditable
 
         $subject_type = $model::class;
 
+        $auditLogClass = static::getAuditLogModel();
+
         // once per day: bitstream|view
         if($description == 'bitstream' || $description == 'view'){
 
-            if(AuditLog::where([
+            if($auditLogClass::where([
                 ['description', '=', $description],
                 ['subject_id', '=', $model->id],
                 ['subject_type', '=', $model::class],
@@ -153,7 +163,7 @@ trait Auditable
 
         try {
             // create record
-            AuditLog::create([
+            $auditLogClass::create([
                 'description'  => $description,
                 'subject_id'   => $model->id ?? null,
                 'subject_type' => $subject_type,
@@ -163,7 +173,7 @@ trait Auditable
             ]);
         } catch (\Exception $e) {
             if (strpos($e->getMessage(), 'Data too long') !== false) {
-                AuditLog::create([
+                $auditLogClass::create([
                     'description'  => $description,
                     'subject_id'   => $model->id ?? null,
                     'subject_type' => $subject_type,
