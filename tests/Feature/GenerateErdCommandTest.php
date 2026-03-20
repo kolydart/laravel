@@ -127,17 +127,6 @@ class GenerateErdCommandTest extends TestCase
         $this->assertStringContainsString("%%{init: {'theme': 'base', 'themeVariables': { 'fontSize': '24px'}}}%%", $mermaid);
     }
 
-    public function test_it_bolds_table_names()
-    {
-        $this->markTestIncomplete('something changed in the mermaid syntax');
-        $command = new TestableGenerateErdCommand();
-        $schema = $command->getTestSchema();
-        $mermaid = $command->testGenerateMermaidERD($schema);
-
-        $this->assertStringContainsString('users["**users**"] {', $mermaid);
-        $this->assertStringContainsString('roles["**roles**"] {', $mermaid);
-    }
-
     public function test_it_uses_config_values()
     {
         $command = new TestableGenerateErdCommand();
