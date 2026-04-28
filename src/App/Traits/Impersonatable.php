@@ -91,12 +91,10 @@ trait Impersonatable
         }
 
         $class::create([
-            'description'  => $description,
-            'subject_id'   => $targetId,
             'subject_type' => config('auth.providers.users.model', 'App\Models\User'),
+            'subject_id'   => $targetId,
+            'description'  => $description,
             'user_id'      => $adminId,
-            'properties'   => ['target_user_id' => $targetId],
-            'host'         => request()->ip() ?? null,
         ]);
     }
 }
