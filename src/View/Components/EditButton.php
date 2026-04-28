@@ -6,7 +6,6 @@ use Illuminate\View\Component;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Lang;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\Request;
 use Kolydart\Laravel\App\Helpers\RouterHelper;
 
 class EditButton extends Component
@@ -26,9 +25,20 @@ class EditButton extends Component
     {
         $this->show = false;
 
+        // Only relevant on 'show' actions
+        if (!Route::getCurrentRoute() || Route::getCurrentRoute()->getActionMethod() !== 'show') {
+            return;
+        }
+
+        // Check if the controller exists and has an edit method
+        if (!is_object(request()->route()?->controller) ||
+            !(method_exists(get_class(request()->route()->controller), 'edit'))) {
+            return;
+        }
+
         // Check if the user has permission to edit the resource
-        if( Gate::denies(RouterHelper::getPermissionTitle()) ){
-            return null;
+        if (Gate::denies(RouterHelper::getPermissionTitle())) {
+            return;
         }
 
         // Get the text for the edit button
@@ -40,23 +50,13 @@ class EditButton extends Component
             $this->text = 'Edit';
         }
 
-        // Get the URL for the edit button
-        if (Route::getCurrentRoute()->getActionMethod() == 'show') {
+        // Replace the 'show' method with 'edit' in the router name
+        $this->url = route(
+            RouterHelper::replaceMethodInRouterName(),
+            request()->segment(count(request()->segments()))
+        );
 
-            // Check if the controller exists and has an edit method
-            if (!is_object(request()->route()->controller) ||
-                !(method_exists(get_class(request()->route()->controller), 'edit'))) {
-                return;
-            }
-            // Replace the 'show' method with 'edit' in the router name
-            $this->url = route(
-                RouterHelper::replaceMethodInRouterName(),
-                request()->segment(count(\request()->segments()))
-            );
-
-            // Show the edit button
-            $this->show = true;
-        }
+        $this->show = true;
     }
 
     public function render()
