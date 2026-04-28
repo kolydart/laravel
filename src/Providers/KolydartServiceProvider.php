@@ -44,6 +44,15 @@ class KolydartServiceProvider extends ServiceProvider
             \Kolydart\Laravel\App\Listeners\ImpersonateUser::class
         );
 
+        // Register impersonate UI routes
+        $routeConfig = config('kolydart.impersonate.routes', []);
+        \Illuminate\Support\Facades\Route::middleware($routeConfig['middleware'] ?? ['auth'])
+            ->prefix($routeConfig['prefix'] ?? 'admin')
+            ->name($routeConfig['name'] ?? 'admin.')
+            ->group(function () {
+                $this->loadRoutesFrom(__DIR__.'/../routes/impersonate.php');
+            });
+
         // Load commands if running in console
         if ($this->app->runningInConsole()) {
             $this->commands([
