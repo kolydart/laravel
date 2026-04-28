@@ -47,7 +47,7 @@ trait Impersonatable
 
         Auth::login($user);
 
-        $this->auditImpersonation('impersonation_started', $adminId, $user->id);
+        $this->auditImpersonation('impersonation_start', $adminId, $user->id);
 
         return redirect()->route('admin.home');
     }
@@ -76,7 +76,7 @@ trait Impersonatable
         }
 
         Auth::login($admin);
-        $this->auditImpersonation('impersonation_ended', $adminId, $targetId);
+        $this->auditImpersonation('impersonation_end', $adminId, $targetId);
 
         return redirect()->route('admin.users.index');
     }
@@ -95,8 +95,8 @@ trait Impersonatable
             'subject_id'   => $targetId,
             'subject_type' => config('auth.providers.users.model', 'App\Models\User'),
             'user_id'      => $adminId,
-            'properties'   => ['ip' => request()->ip(), 'ua' => request()->userAgent()],
-            'host'         => request()->getHost(),
+            'properties'   => ['target_user_id' => $targetId],
+            'host'         => request()->ip() ?? null,
         ]);
     }
 }
