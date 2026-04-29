@@ -4,6 +4,8 @@
 
 A collection of Laravel helper classes including ordered pivot relationships functionality.
 
+> Additional documentation is available in the [`src/docs/`](src/docs/) folder.
+
 ## Table of Contents
 
 - [Installation](#installation)
