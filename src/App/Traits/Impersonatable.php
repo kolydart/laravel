@@ -95,6 +95,7 @@ trait Impersonatable
             'subject_id'   => $targetId,
             'description'  => $description,
             'user_id'      => $adminId,
+            'properties'   => [],
         ]);
     }
 }
