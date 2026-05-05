@@ -2,12 +2,64 @@
 
 namespace Kolydart\Laravel\Tests\App\Traits;
 
-use Kolydart\Laravel\Tests\TestCase;
-use Kolydart\Laravel\App\Traits\Auditable;
+use Illuminate\Config\Repository as Config;
+use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
+use Kolydart\Laravel\App\Traits\Auditable;
+use Kolydart\Laravel\Tests\TestCase;
 
 class AuditableTest extends TestCase
 {
+    protected function tearDown(): void
+    {
+        Container::setInstance(null);
+        parent::tearDown();
+    }
+
+    private function makeIpResolver(): object
+    {
+        return new class extends Model {
+            use Auditable;
+            public static function resolveIp(): ?string
+            {
+                return static::getAuditLogIp();
+            }
+        };
+    }
+    // ── getAuditLogIp ──────────────────────────────────────────────────────
+
+    /** @test */
+    public function get_audit_log_ip_returns_null_when_store_ip_is_false(): void
+    {
+        Container::setInstance($this->app);
+        $this->app->instance('config', new Config(['audit-log' => ['store_ip' => false]]));
+
+        $this->assertNull($this->makeIpResolver()::resolveIp());
+    }
+
+    /** @test */
+    public function get_audit_log_ip_returns_request_ip_when_store_ip_is_true(): void
+    {
+        Container::setInstance($this->app);
+        $this->app->instance('config', new Config(['audit-log' => ['store_ip' => true]]));
+        $this->app->instance('request', Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '1.2.3.4']));
+
+        $this->assertSame('1.2.3.4', $this->makeIpResolver()::resolveIp());
+    }
+
+    /** @test */
+    public function get_audit_log_ip_returns_request_ip_when_config_absent_defaulting_to_true(): void
+    {
+        Container::setInstance($this->app);
+        $this->app->instance('config', new Config([]));
+        $this->app->instance('request', Request::create('/', 'GET', [], [], [], ['REMOTE_ADDR' => '9.9.9.9']));
+
+        $this->assertSame('9.9.9.9', $this->makeIpResolver()::resolveIp());
+    }
+
+    // ── structural ─────────────────────────────────────────────────────────
+
     /** @test */
     public function it_exists()
     {

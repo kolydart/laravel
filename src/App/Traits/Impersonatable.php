@@ -96,7 +96,7 @@ trait Impersonatable
             'description'  => $description,
             'user_id'      => $adminId,
             'properties'   => [],
-            'host'         => request()->ip(),
+            'host'         => null,
         ]);
     }
 }

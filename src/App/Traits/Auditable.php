@@ -16,7 +16,20 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * @example
  * use \Kolydart\Laravel\App\Traits\Auditable;
  *
+ * @configuration
+ * IP logging is controlled via config/audit-log.php:
+ *   'store_ip' => true   (default) stores the client IP in the host column
+ *   'store_ip' => false  disables IP storage (recommended for GDPR compliance)
+ *
+ * Publish or create config/audit-log.php in your installation:
+ *   return ['store_ip' => false];
+ *
  * @changelog
+ * 2026-05-05
+ * - Add getAuditLogIp(): IP logging now configurable via config('audit-log.store_ip', true).
+ * - Remove host condition from once-per-day dedup for view/bitstream; deduplication
+ *   is now per-user-per-item-per-day (robust across multiple IPs/VPNs).
+ *
  * 2026-03-20
  * - Dynamic AuditLog namespace resolution via getAuditLogModel(): supports
  *   both App\AuditLog and App\Models\AuditLog installations.
@@ -35,6 +48,19 @@ trait Auditable
     protected static function getAuditLogModel(): string
     {
         return class_exists('App\Models\AuditLog') ? 'App\Models\AuditLog' : 'App\AuditLog';
+    }
+
+    /**
+     * Returns the client IP for audit logging, or null if disabled.
+     * Controlled by config/audit-log.php: ['store_ip' => false]
+     */
+    protected static function getAuditLogIp(): ?string
+    {
+        if (!config('audit-log.store_ip', true)) {
+            return null;
+        }
+
+        return request()->ip() ?? null;
     }
 
     public static function bootAuditable()
@@ -122,7 +148,6 @@ trait Auditable
                 ['subject_id', '=', $model->id],
                 ['subject_type', '=', $model::class],
                 ['user_id', '=', $user_id ?? null],
-                ['host', '=', request()->ip() ?? null],
                 ])
                 ->whereDate('created_at', date('Y-m-d'))
                 ->exists()){
@@ -169,7 +194,7 @@ trait Auditable
                 'subject_type' => $subject_type,
                 'user_id'      => $user_id ?? null,
                 'properties'   => $properties,
-                'host'         => request()->ip() ?? null,
+                'host'         => static::getAuditLogIp(),
             ]);
         } catch (\Exception $e) {
             if (strpos($e->getMessage(), 'Data too long') !== false) {
@@ -179,7 +204,7 @@ trait Auditable
                     'subject_type' => $subject_type,
                     'user_id'      => $user_id ?? null,
                     'properties'   => ['error' => 'Data too large to store'],
-                    'host'         => request()->ip() ?? null,
+                    'host'         => static::getAuditLogIp(),
                 ]);
             } else {
                 throw $e;

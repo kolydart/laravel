@@ -94,6 +94,34 @@ class ImpersonatableTest extends TestCase
         $this->assertTrue($reflection->hasMethod('auditImpersonation'));
     }
 
+    // ── auditImpersonation host ────────────────────────────────────────────
+
+    /**
+     * @test
+     * @runInSeparateProcess
+     * @preserveGlobalState disabled
+     */
+    public function audit_impersonation_host_is_null(): void
+    {
+        eval('namespace App\Models; class AuditLog {
+            public static $lastCreate = null;
+            public static function create(array $data): void { static::$lastCreate = $data; }
+        }');
+
+        $instance = new class {
+            use Impersonatable;
+            public function callAudit(string $desc, int $adminId, int $targetId): void
+            {
+                $this->auditImpersonation($desc, $adminId, $targetId);
+            }
+        };
+
+        $instance->callAudit('impersonation_start', 1, 2);
+
+        $this->assertArrayHasKey('host', \App\Models\AuditLog::$lastCreate);
+        $this->assertNull(\App\Models\AuditLog::$lastCreate['host']);
+    }
+
     // ── auditImpersonation class resolution ────────────────────────────────
 
     /** @test */
