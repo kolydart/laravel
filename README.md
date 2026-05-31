@@ -16,6 +16,7 @@ A collection of Laravel helper classes including ordered pivot relationships fun
   - [API Reference](#api-reference)
   - [Migration from Manual Implementation](#migration-from-manual-implementation)
 - [Additional Components](#additional-components)
+- [Testing Helpers](#testing-helpers)
 - [Testing](#testing)
 - [License](#license)
 
@@ -674,6 +675,36 @@ Resets Bootstrap table styles by removing `table-striped` and `table-bordered` c
 ```blade
 <x-kolydart::table-style-reset />
 ```
+
+## Testing Helpers
+
+### `InteractsWithDatatables`
+
+Trait that closes a common test gap for `yajra/laravel-datatables`: ordinary feature tests hit the HTML shell of a `serverSide` DataTable but never trigger the AJAX request the browser fires for the actual rows. The helper extracts the live columns config from the rendered page and replays it as XHR with a global-search value, so server-side errors (invalid column names, broken filters, missing relations) surface in CI instead of in production.
+
+Mix it into your project's base test case and call `assertDatatableAjaxLoads(string $route)` from any feature test:
+
+```php
+use Kolydart\Laravel\App\Testing\InteractsWithDatatables;
+
+abstract class TestCase extends BaseTestCase
+{
+    use InteractsWithDatatables;
+}
+```
+
+```php
+#[Test]
+public function datatable_ajax_loads_without_errors(): void
+{
+    $this->login_user('Secretary');
+    \App\Models\User::factory()->create();
+
+    $this->assertDatatableAjaxLoads(route('admin.users.index'));
+}
+```
+
+Full documentation, including what the helper catches and its limitations, is in [`src/docs/datatable-ajax-testing.md`](src/docs/datatable-ajax-testing.md).
 
 ## Testing
 
