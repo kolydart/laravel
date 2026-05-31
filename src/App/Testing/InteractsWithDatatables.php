@@ -7,6 +7,11 @@ use Illuminate\Testing\TestResponse;
 /**
  * Test helper for Yajra Laravel-DataTables (`yajra/laravel-datatables-oracle`).
  *
+ * @deprecated Use Laravel Dusk smoke tests instead. Feature-test AJAX replays
+ *             are brittle against JS-rendered tables and miss real browser
+ *             behaviour. A Dusk test drives an actual browser, executes JS,
+ *             and catches the same failures without fragile HTML scraping.
+ *
  * Standard feature tests that hit the index route only exercise the HTML
  * shell of a DataTable. They never trigger the AJAX endpoint that
  * `serverSide: true` DataTables call from the browser on page load, so
@@ -69,6 +74,8 @@ trait InteractsWithDatatables
     /**
      * Replay the AJAX request that a Yajra-DataTable index view issues
      * from the browser, and assert it completes without an error payload.
+     *
+     * @deprecated Use a Laravel Dusk smoke test instead.
      *
      * @param  string  $route   Fully-qualified URL of the index page (use `route(…)`).
      * @param  string  $search  Global-search probe value sent on the XHR. The
