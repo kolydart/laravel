@@ -24,7 +24,23 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * Publish or create config/audit-log.php in your installation:
  *   return ['store_ip' => false];
  *
+ * @caveat
+ * Bulk operations bypass model events and are NOT audited:
+ *   - Model::where(...)->update([...])  // does not fire 'updated' event
+ *   - Model::where(...)->delete()       // does not fire 'deleted' event
+ *   - DB::table('...')->...             // bypasses Eloquent entirely
+ *
+ * For audited bulk changes, iterate explicitly:
+ *   Model::where(...)->each(fn($m) => $m->update([...]));
+ *
  * @changelog
+ * 2026-06-02
+ * - Add defensive try/catch around "Data too long" fallback create: log
+ *   failures via Log::error instead of letting them propagate as uncaught
+ *   exceptions to user-facing actions.
+ * - Document caveat: bulk operations (where->update/delete, DB facade)
+ *   bypass model events and are NOT audited.
+ *
  * 2026-05-05
  * - Add getAuditLogIp(): IP logging now configurable via config('audit-log.store_ip', true).
  * - Remove host condition from once-per-day dedup for view/bitstream; deduplication
@@ -198,14 +214,24 @@ trait Auditable
             ]);
         } catch (\Exception $e) {
             if (strpos($e->getMessage(), 'Data too long') !== false) {
-                $auditLogClass::create([
-                    'description'  => $description,
-                    'subject_id'   => $model->id ?? null,
-                    'subject_type' => $subject_type,
-                    'user_id'      => $user_id ?? null,
-                    'properties'   => ['error' => 'Data too large to store'],
-                    'host'         => static::getAuditLogIp(),
-                ]);
+                try {
+                    $auditLogClass::create([
+                        'description'  => $description,
+                        'subject_id'   => $model->id ?? null,
+                        'subject_type' => $subject_type,
+                        'user_id'      => $user_id ?? null,
+                        'properties'   => ['error' => 'Data too large to store'],
+                        'host'         => static::getAuditLogIp(),
+                    ]);
+                } catch (\Exception $fallbackException) {
+                    \Illuminate\Support\Facades\Log::error('Audit log fallback write failed', [
+                        'original_exception' => $e->getMessage(),
+                        'fallback_exception' => $fallbackException->getMessage(),
+                        'subject_type'       => $subject_type,
+                        'subject_id'         => $model->id ?? null,
+                        'description'        => $description,
+                    ]);
+                }
             } else {
                 throw $e;
             }
