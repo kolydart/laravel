@@ -25,9 +25,50 @@ class HasAuditedRelationsTest extends TestCase
     public function trait_exposes_expected_public_methods(): void
     {
         $host = $this->makeHost();
-        foreach (['auditedAttach', 'auditedDetach', 'auditedSync', 'auditedSyncWithoutDetaching', 'auditedToggle'] as $method) {
+        $methods = [
+            'auditedAttach', 'auditedDetach', 'auditedSync',
+            'auditedSyncWithoutDetaching', 'auditedToggle',
+            'auditedSyncWithOrder', 'auditedSyncRoledPivot',
+        ];
+        foreach ($methods as $method) {
             $this->assertTrue(method_exists($host, $method), "Missing method: {$method}");
         }
+    }
+
+    /** @test */
+    public function audited_sync_with_order_has_correct_signature(): void
+    {
+        $ref = new ReflectionMethod($this->makeHost(), 'auditedSyncWithOrder');
+        $params = $ref->getParameters();
+
+        $this->assertCount(3, $params);
+        $this->assertSame('relation', $params[0]->getName());
+        $this->assertSame('ids', $params[1]->getName());
+        $this->assertSame('orderColumn', $params[2]->getName());
+        $this->assertSame('order', $params[2]->getDefaultValue());
+    }
+
+    /** @test */
+    public function audited_sync_roled_pivot_has_correct_defaults(): void
+    {
+        $ref = new ReflectionMethod($this->makeHost(), 'auditedSyncRoledPivot');
+        $params = $ref->getParameters();
+
+        $this->assertCount(4, $params);
+        $this->assertSame('role', $params[2]->getDefaultValue());
+        $this->assertSame('creator', $params[3]->getDefaultValue());
+    }
+
+    /** @test */
+    public function silent_pivot_update_is_protected(): void
+    {
+        $ref = new ReflectionMethod($this->makeHost(), 'silentPivotUpdate');
+        $this->assertTrue($ref->isProtected(), 'silentPivotUpdate must be protected');
+
+        $params = $ref->getParameters();
+        $this->assertCount(4, $params);
+        // extraWhere has a default of []
+        $this->assertSame([], $params[3]->getDefaultValue());
     }
 
     /** @test */

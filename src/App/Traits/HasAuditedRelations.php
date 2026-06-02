@@ -35,6 +35,10 @@ use Illuminate\Support\Arr;
  * @changelog
  * 2026-06-02 (AU5)
  * - Initial implementation.
+ * 2026-06-02 (Φ1)
+ * - ADD: auditedSyncWithOrder() — smart-diff ordered sync (no phantom events on reorder).
+ * - ADD: auditedSyncRoledPivot() — smart-diff sync for (id,role) identity pivots.
+ * - ADD: silentPivotUpdate() — raw DB update bypassing pivot model events.
  */
 trait HasAuditedRelations
 {
@@ -157,7 +161,157 @@ trait HasAuditedRelations
         return $result;
     }
 
+    /**
+     * Audited ordered sync for BelongsToMany with an order column.
+     *
+     * Smart diff: attaches new ids, detaches removed ids, silently reorders
+     * ids that remain. Reorder-only changes produce NO audit entries.
+     *
+     * @param  string  $relation      relation method name (e.g. 'instruments')
+     * @param  array   $ids           ordered flat list of related IDs
+     * @param  string  $orderColumn   pivot column for order
+     * @return array{attached: array<int>, detached: array<int>, updated: array}
+     */
+    public function auditedSyncWithOrder(string $relation, array $ids, string $orderColumn = 'order'): array
+    {
+        $rel = $this->resolveAuditedRelation($relation);
+        $ids = array_values(array_filter($ids, fn($id) => !empty($id)));
+
+        // Current state: related_id => current order value
+        $cur = $rel->withPivot($orderColumn)->get()
+            ->mapWithKeys(fn($r) => [(int) $r->getKey() => (int) $r->pivot->{$orderColumn}]);
+
+        // Desired state: related_id => desired order (1-based)
+        $des = collect($ids)->mapWithKeys(fn($id, $i) => [(int) $id => $i + 1]);
+
+        $detached = [];
+        $attached = [];
+
+        // Detach ids not present in desired
+        foreach ($cur->keys()->diff($des->keys()) as $id) {
+            $snap = $this->snapshotRelatedForDetach($rel, [(int) $id]);
+            $rel->detach((int) $id);
+            foreach ($snap as $row) {
+                $this->writeRelationAudit('detach', $relation, $rel, (int) $row['related_id'], $row['pivot']);
+            }
+            $detached[] = (int) $id;
+        }
+
+        // Attach ids not present in current
+        foreach ($des->keys()->diff($cur->keys()) as $id) {
+            $rel->attach((int) $id, [$orderColumn => $des[$id]]);
+            $this->writeRelationAudit('attach', $relation, $rel, (int) $id, [$orderColumn => $des[$id]]);
+            $attached[] = (int) $id;
+        }
+
+        // Silent reorder for ids that remain but whose order changed
+        foreach ($des->intersectByKeys($cur) as $id => $newOrder) {
+            if ($cur[$id] !== $newOrder) {
+                $this->silentPivotUpdate($rel, (int) $id, [$orderColumn => $newOrder]);
+            }
+        }
+
+        return ['attached' => $attached, 'detached' => $detached, 'updated' => []];
+    }
+
+    /**
+     * Audited sync for pivot tables with role + order columns.
+     *
+     * Identity key = (related_id, role) — changing role counts as
+     * detach-old + attach-new. Reordering a same (id,role) pair is silent.
+     *
+     * @param  string  $relation       relation method name (e.g. 'agents')
+     * @param  array   $rows           array of ['id' => int, 'role' => string, ...] maps
+     * @param  string  $roleAttribute  pivot column for role
+     * @param  string  $defaultRole    role value when not supplied in a row
+     * @return array{attached: array<int>, detached: array<int>, updated: array}
+     */
+    public function auditedSyncRoledPivot(
+        string $relation,
+        array  $rows,
+        string $roleAttribute = 'role',
+        string $defaultRole   = 'creator'
+    ): array {
+        $rel = $this->resolveAuditedRelation($relation);
+
+        $extractRole = fn($v) => $v === null
+            ? $defaultRole
+            : ($v instanceof \BackedEnum ? (string) $v->value : (string) $v);
+
+        // Current: "id:role" => current order
+        $cur = $rel->withPivot($roleAttribute, 'order')->get()
+            ->mapWithKeys(fn($r) => [
+                (int) $r->getKey() . ':' . $extractRole($r->pivot->{$roleAttribute}) => (int) $r->pivot->order,
+            ]);
+
+        // Desired: "id:role" => desired order (1-based)
+        $des = collect($rows)
+            ->filter(fn($r) => !empty($r['id']))
+            ->values()
+            ->mapWithKeys(fn($r, $i) => [
+                (int) $r['id'] . ':' . ($r[$roleAttribute] ?? $defaultRole) => $i + 1,
+            ]);
+
+        $attached = [];
+        $detached = [];
+
+        // Detach (id,role) pairs absent from desired
+        foreach ($cur->diffKeys($des) as $key => $_) {
+            [$id, $role] = explode(':', $key, 2);
+            $rel->wherePivot($roleAttribute, $role)->detach((int) $id);
+            $this->writeRelationAudit('detach', $relation, $rel, (int) $id, [$roleAttribute => $role]);
+            $detached[] = (int) $id;
+        }
+
+        // Attach new (id,role) pairs
+        foreach ($des->diffKeys($cur) as $key => $order) {
+            [$id, $role] = explode(':', $key, 2);
+            $rel->attach((int) $id, [$roleAttribute => $role, 'order' => $order]);
+            $this->writeRelationAudit('attach', $relation, $rel, (int) $id, [$roleAttribute => $role]);
+            $attached[] = (int) $id;
+        }
+
+        // Silent reorder for (id,role) pairs that remain but order changed
+        foreach ($des->intersectByKeys($cur) as $key => $order) {
+            if ($cur[$key] !== $order) {
+                [$id, $role] = explode(':', $key, 2);
+                $this->silentPivotUpdate($rel, (int) $id, ['order' => $order], [$roleAttribute => $role]);
+            }
+        }
+
+        return ['attached' => $attached, 'detached' => $detached, 'updated' => []];
+    }
+
     // ── helpers ────────────────────────────────────────────────────────────
+
+    /**
+     * Update a pivot row directly via query builder, bypassing pivot model events.
+     *
+     * Uses `newPivotQuery()` (same as `snapshotRelatedForDetach`) instead of
+     * `updateExistingPivot()`, because the latter fires `updated` events on
+     * the pivot model when the relation uses `using(PivotModel)`, producing
+     * phantom audits. `newPivotQuery()` returns a raw query builder scoped to
+     * the current parent — no model events, no Eloquent casts (safe for `order`).
+     *
+     * @param  BelongsToMany  $rel         the relation instance
+     * @param  int            $relatedId   related record primary key
+     * @param  array          $attrs       columns/values to update
+     * @param  array          $extraWhere  additional WHERE conditions (e.g. ['role' => 'creator'])
+     * @return int  rows affected
+     */
+    protected function silentPivotUpdate(BelongsToMany $rel, int $relatedId, array $attrs, array $extraWhere = []): int
+    {
+        // newPivotQuery() already scopes to WHERE foreign_pivot_key = parent_id
+        // and returns a raw query builder — no Eloquent model events fired.
+        $q = $rel->newPivotQuery()
+            ->where($rel->getRelatedPivotKeyName(), $relatedId);
+
+        foreach ($extraWhere as $col => $v) {
+            $q->where($col, $v);
+        }
+
+        return $q->update($attrs);
+    }
 
     /**
      * Resolve το relation object. Πετάει LogicException αν δεν είναι BelongsToMany/MorphToMany.
