@@ -34,6 +34,12 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  *   Model::where(...)->each(fn($m) => $m->update([...]));
  *
  * @changelog
+ * 2026-06-02 (P4)
+ * - Bundle $model->auditMetaExtras (set by HasMetaFields::saveWithMeta() in the
+ *   consumer app) into the audit `properties` JSON so column + meta updates
+ *   yield a single audit entry. See l_helmarc
+ *   docs/roadmaps/data-objects-audit-integration.md §AU4.
+ *
  * 2026-06-02
  * - Add defensive try/catch around "Data too long" fallback create: log
  *   failures via Log::error instead of letting them propagate as uncaught
@@ -92,6 +98,12 @@ trait Auditable
             unset($changes['two_factor_expires_at']);
             unset($changes['updated_at']);
             unset($changes['remember_token']);
+
+            // Bundle meta diffs collected by HasMetaFields::saveWithMeta() so
+            // column + meta changes land in one audit entry.
+            if (isset($model->auditMetaExtras) && is_array($model->auditMetaExtras)) {
+                $changes = array_merge($changes, $model->auditMetaExtras);
+            }
 
             // do not proceed if array is empty
             if (empty($changes)) {
