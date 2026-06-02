@@ -70,7 +70,13 @@ trait HasOrderedPivot
     }
 
     /**
-     * Sync related models with order preservation.
+     * Sync related models with order preservation, using a smart diff so that
+     * unchanged related records are not deleted/re-created. Order-only changes
+     * update the pivot row silently (no pivot model events).
+     *
+     * @deprecated Use `HasAuditedRelations::auditedSyncWithOrder()` on the
+     *             parent model for audited operations. This helper performs
+     *             pivot writes without producing audit entries.
      *
      * @param BelongsToMany $relationship
      * @param array $ids Array of IDs in the desired order
@@ -84,13 +90,25 @@ trait HasOrderedPivot
             throw new \InvalidArgumentException('Relationship must be a BelongsToMany relationship.');
         }
 
-        // First, detach all existing relationships
-        $relationship->detach();
+        $ids = array_values(array_filter($ids, fn($id) => !empty($id)));
 
-        // Then attach with order
-        foreach ($ids as $order => $id) {
-            if (!empty($id)) { // Skip empty IDs
-                $relationship->attach($id, [$orderColumn => $order + 1]); // +1 to start from 1 instead of 0
+        $current = $relationship->withPivot($orderColumn)->get()
+            ->mapWithKeys(fn($r) => [(int) $r->getKey() => (int) $r->pivot->{$orderColumn}]);
+        $desired = collect($ids)->mapWithKeys(fn($id, $i) => [(int) $id => $i + 1]);
+
+        foreach ($current->keys()->diff($desired->keys()) as $id) {
+            $relationship->detach((int) $id);
+        }
+
+        foreach ($desired->keys()->diff($current->keys()) as $id) {
+            $relationship->attach((int) $id, [$orderColumn => $desired[$id]]);
+        }
+
+        foreach ($desired->intersectByKeys($current) as $id => $newOrder) {
+            if ($current[$id] !== $newOrder) {
+                $relationship->newPivotQuery()
+                    ->where($relationship->getRelatedPivotKeyName(), (int) $id)
+                    ->update([$orderColumn => $newOrder]);
             }
         }
     }

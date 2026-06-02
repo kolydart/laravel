@@ -16,7 +16,16 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 trait HandlesOrderedPivot
 {
     /**
-     * Sync a relationship with order preservation.
+     * Sync a relationship with order preservation, using a smart diff so that
+     * unchanged related records are not deleted/re-created. Order-only changes
+     * update the pivot row silently (no pivot model events).
+     *
+     * Phantom-event-free: a sync with identical input produces zero DB writes
+     * on the pivot table, and reorder produces only `UPDATE` statements.
+     *
+     * @deprecated Use `HasAuditedRelations::auditedSyncWithOrder()` on the
+     *             parent model for audited operations. This helper performs
+     *             pivot writes without producing audit entries.
      *
      * @param Model $model The parent model
      * @param string $relationshipName The name of the relationship method
@@ -37,17 +46,26 @@ trait HandlesOrderedPivot
             throw new \InvalidArgumentException("Relationship '{$relationshipName}' must be a BelongsToMany relationship.");
         }
 
-        // Filter out empty values
-        $ids = array_filter($ids, function($id) {
-            return !empty($id);
-        });
+        $ids = array_values(array_filter($ids, fn($id) => !empty($id)));
 
-        // First, detach all existing relationships
-        $relationship->detach();
+        $current = $relationship->withPivot($orderColumn)->get()
+            ->mapWithKeys(fn($r) => [(int) $r->getKey() => (int) $r->pivot->{$orderColumn}]);
+        $desired = collect($ids)->mapWithKeys(fn($id, $i) => [(int) $id => $i + 1]);
 
-        // Then attach with order
-        foreach ($ids as $order => $id) {
-            $relationship->attach($id, [$orderColumn => $order + 1]); // +1 to start from 1 instead of 0
+        foreach ($current->keys()->diff($desired->keys()) as $id) {
+            $relationship->detach((int) $id);
+        }
+
+        foreach ($desired->keys()->diff($current->keys()) as $id) {
+            $relationship->attach((int) $id, [$orderColumn => $desired[$id]]);
+        }
+
+        foreach ($desired->intersectByKeys($current) as $id => $newOrder) {
+            if ($current[$id] !== $newOrder) {
+                $relationship->newPivotQuery()
+                    ->where($relationship->getRelatedPivotKeyName(), (int) $id)
+                    ->update([$orderColumn => $newOrder]);
+            }
         }
     }
 

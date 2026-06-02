@@ -39,6 +39,9 @@ use Illuminate\Support\Arr;
  * - ADD: auditedSyncWithOrder() — smart-diff ordered sync (no phantom events on reorder).
  * - ADD: auditedSyncRoledPivot() — smart-diff sync for (id,role) identity pivots.
  * - ADD: silentPivotUpdate() — raw DB update bypassing pivot model events.
+ * 2026-06-02 (Φ1.5)
+ * - CHANGE: wrap όλα τα audited mutating methods σε transaction
+ *   (getConnection()->transaction(...)) για ατομικότητα pivot mutation + audit write.
  */
 trait HasAuditedRelations
 {
@@ -51,15 +54,17 @@ trait HasAuditedRelations
      */
     public function auditedAttach(string $relation, $id, array $attributes = [], bool $touch = true): void
     {
-        $relationObj = $this->resolveAuditedRelation($relation);
+        $this->getConnection()->transaction(function () use ($relation, $id, $attributes, $touch) {
+            $relationObj = $this->resolveAuditedRelation($relation);
 
-        $normalized = $this->normalizeAuditedIds($id, $attributes);
+            $normalized = $this->normalizeAuditedIds($id, $attributes);
 
-        $relationObj->attach($normalized, [], $touch);
+            $relationObj->attach($normalized, [], $touch);
 
-        foreach ($normalized as $relatedId => $pivotAttrs) {
-            $this->writeRelationAudit('attach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
-        }
+            foreach ($normalized as $relatedId => $pivotAttrs) {
+                $this->writeRelationAudit('attach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
+            }
+        });
     }
 
     /**
@@ -69,19 +74,21 @@ trait HasAuditedRelations
      */
     public function auditedDetach(string $relation, $ids = null, bool $touch = true): int
     {
-        $relationObj = $this->resolveAuditedRelation($relation);
+        return $this->getConnection()->transaction(function () use ($relation, $ids, $touch) {
+            $relationObj = $this->resolveAuditedRelation($relation);
 
-        // Snapshot των επερχόμενων detached records ΠΡΙΝ τη διαγραφή ώστε να
-        // πιάσουμε pivot.role και related_label.
-        $snapshot = $this->snapshotRelatedForDetach($relationObj, $ids);
+            // Snapshot των επερχόμενων detached records ΠΡΙΝ τη διαγραφή ώστε να
+            // πιάσουμε pivot.role και related_label.
+            $snapshot = $this->snapshotRelatedForDetach($relationObj, $ids);
 
-        $count = $relationObj->detach($this->normalizeIdsOnly($ids), $touch);
+            $count = $relationObj->detach($this->normalizeIdsOnly($ids), $touch);
 
-        foreach ($snapshot as $row) {
-            $this->writeRelationAudit('detach', $relation, $relationObj, (int) $row['related_id'], $row['pivot']);
-        }
+            foreach ($snapshot as $row) {
+                $this->writeRelationAudit('detach', $relation, $relationObj, (int) $row['related_id'], $row['pivot']);
+            }
 
-        return $count;
+            return $count;
+        });
     }
 
     /**
@@ -95,36 +102,38 @@ trait HasAuditedRelations
      */
     public function auditedSync(string $relation, $ids, bool $detaching = true): array
     {
-        $relationObj = $this->resolveAuditedRelation($relation);
+        return $this->getConnection()->transaction(function () use ($relation, $ids, $detaching) {
+            $relationObj = $this->resolveAuditedRelation($relation);
 
-        $normalized = $this->normalizeAuditedIds($ids, []);
+            $normalized = $this->normalizeAuditedIds($ids, []);
 
-        // Snapshot παλιό state πριν το sync ώστε να μπορούμε να γράψουμε
-        // role-change audit entries (updated).
-        $beforeRoles = $this->snapshotPivotRoles($relationObj);
+            // Snapshot παλιό state πριν το sync ώστε να μπορούμε να γράψουμε
+            // role-change audit entries (updated).
+            $beforeRoles = $this->snapshotPivotRoles($relationObj);
 
-        $result = $detaching
-            ? $relationObj->sync($normalized)
-            : $relationObj->syncWithoutDetaching($normalized);
+            $result = $detaching
+                ? $relationObj->sync($normalized)
+                : $relationObj->syncWithoutDetaching($normalized);
 
-        foreach ($result['attached'] ?? [] as $relatedId) {
-            $pivotAttrs = $normalized[$relatedId] ?? [];
-            $this->writeRelationAudit('attach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
-        }
-        foreach ($result['detached'] ?? [] as $relatedId) {
-            // Στο detach δεν έχουμε pivot attrs στο $normalized — δοκίμασε
-            // από το $beforeRoles snapshot.
-            $pivotAttrs = isset($beforeRoles[$relatedId])
-                ? ['role' => $beforeRoles[$relatedId]]
-                : [];
-            $this->writeRelationAudit('detach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
-        }
-        foreach ($result['updated'] ?? [] as $relatedId) {
-            $pivotAttrs = $normalized[$relatedId] ?? [];
-            $this->writeRelationAudit('update', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
-        }
+            foreach ($result['attached'] ?? [] as $relatedId) {
+                $pivotAttrs = $normalized[$relatedId] ?? [];
+                $this->writeRelationAudit('attach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
+            }
+            foreach ($result['detached'] ?? [] as $relatedId) {
+                // Στο detach δεν έχουμε pivot attrs στο $normalized — δοκίμασε
+                // από το $beforeRoles snapshot.
+                $pivotAttrs = isset($beforeRoles[$relatedId])
+                    ? ['role' => $beforeRoles[$relatedId]]
+                    : [];
+                $this->writeRelationAudit('detach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
+            }
+            foreach ($result['updated'] ?? [] as $relatedId) {
+                $pivotAttrs = $normalized[$relatedId] ?? [];
+                $this->writeRelationAudit('update', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
+            }
 
-        return $result;
+            return $result;
+        });
     }
 
     /**
@@ -144,21 +153,23 @@ trait HasAuditedRelations
      */
     public function auditedToggle(string $relation, $ids, bool $touch = true): array
     {
-        $relationObj = $this->resolveAuditedRelation($relation);
+        return $this->getConnection()->transaction(function () use ($relation, $ids, $touch) {
+            $relationObj = $this->resolveAuditedRelation($relation);
 
-        $normalized = $this->normalizeAuditedIds($ids, []);
+            $normalized = $this->normalizeAuditedIds($ids, []);
 
-        $result = $relationObj->toggle($normalized, $touch);
+            $result = $relationObj->toggle($normalized, $touch);
 
-        foreach ($result['attached'] ?? [] as $relatedId) {
-            $pivotAttrs = $normalized[$relatedId] ?? [];
-            $this->writeRelationAudit('attach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
-        }
-        foreach ($result['detached'] ?? [] as $relatedId) {
-            $this->writeRelationAudit('detach', $relation, $relationObj, (int) $relatedId, []);
-        }
+            foreach ($result['attached'] ?? [] as $relatedId) {
+                $pivotAttrs = $normalized[$relatedId] ?? [];
+                $this->writeRelationAudit('attach', $relation, $relationObj, (int) $relatedId, $pivotAttrs);
+            }
+            foreach ($result['detached'] ?? [] as $relatedId) {
+                $this->writeRelationAudit('detach', $relation, $relationObj, (int) $relatedId, []);
+            }
 
-        return $result;
+            return $result;
+        });
     }
 
     /**
@@ -174,44 +185,46 @@ trait HasAuditedRelations
      */
     public function auditedSyncWithOrder(string $relation, array $ids, string $orderColumn = 'order'): array
     {
-        $rel = $this->resolveAuditedRelation($relation);
-        $ids = array_values(array_filter($ids, fn($id) => !empty($id)));
+        return $this->getConnection()->transaction(function () use ($relation, $ids, $orderColumn) {
+            $rel = $this->resolveAuditedRelation($relation);
+            $ids = array_values(array_filter($ids, fn($id) => !empty($id)));
 
-        // Current state: related_id => current order value
-        $cur = $rel->withPivot($orderColumn)->get()
-            ->mapWithKeys(fn($r) => [(int) $r->getKey() => (int) $r->pivot->{$orderColumn}]);
+            // Current state: related_id => current order value
+            $cur = $rel->withPivot($orderColumn)->get()
+                ->mapWithKeys(fn($r) => [(int) $r->getKey() => (int) $r->pivot->{$orderColumn}]);
 
-        // Desired state: related_id => desired order (1-based)
-        $des = collect($ids)->mapWithKeys(fn($id, $i) => [(int) $id => $i + 1]);
+            // Desired state: related_id => desired order (1-based)
+            $des = collect($ids)->mapWithKeys(fn($id, $i) => [(int) $id => $i + 1]);
 
-        $detached = [];
-        $attached = [];
+            $detached = [];
+            $attached = [];
 
-        // Detach ids not present in desired
-        foreach ($cur->keys()->diff($des->keys()) as $id) {
-            $snap = $this->snapshotRelatedForDetach($rel, [(int) $id]);
-            $rel->detach((int) $id);
-            foreach ($snap as $row) {
-                $this->writeRelationAudit('detach', $relation, $rel, (int) $row['related_id'], $row['pivot']);
+            // Detach ids not present in desired
+            foreach ($cur->keys()->diff($des->keys()) as $id) {
+                $snap = $this->snapshotRelatedForDetach($rel, [(int) $id]);
+                $rel->detach((int) $id);
+                foreach ($snap as $row) {
+                    $this->writeRelationAudit('detach', $relation, $rel, (int) $row['related_id'], $row['pivot']);
+                }
+                $detached[] = (int) $id;
             }
-            $detached[] = (int) $id;
-        }
 
-        // Attach ids not present in current
-        foreach ($des->keys()->diff($cur->keys()) as $id) {
-            $rel->attach((int) $id, [$orderColumn => $des[$id]]);
-            $this->writeRelationAudit('attach', $relation, $rel, (int) $id, [$orderColumn => $des[$id]]);
-            $attached[] = (int) $id;
-        }
-
-        // Silent reorder for ids that remain but whose order changed
-        foreach ($des->intersectByKeys($cur) as $id => $newOrder) {
-            if ($cur[$id] !== $newOrder) {
-                $this->silentPivotUpdate($rel, (int) $id, [$orderColumn => $newOrder]);
+            // Attach ids not present in current
+            foreach ($des->keys()->diff($cur->keys()) as $id) {
+                $rel->attach((int) $id, [$orderColumn => $des[$id]]);
+                $this->writeRelationAudit('attach', $relation, $rel, (int) $id, [$orderColumn => $des[$id]]);
+                $attached[] = (int) $id;
             }
-        }
 
-        return ['attached' => $attached, 'detached' => $detached, 'updated' => []];
+            // Silent reorder for ids that remain but whose order changed
+            foreach ($des->intersectByKeys($cur) as $id => $newOrder) {
+                if ($cur[$id] !== $newOrder) {
+                    $this->silentPivotUpdate($rel, (int) $id, [$orderColumn => $newOrder]);
+                }
+            }
+
+            return ['attached' => $attached, 'detached' => $detached, 'updated' => []];
+        });
     }
 
     /**
@@ -232,54 +245,56 @@ trait HasAuditedRelations
         string $roleAttribute = 'role',
         string $defaultRole   = 'creator'
     ): array {
-        $rel = $this->resolveAuditedRelation($relation);
+        return $this->getConnection()->transaction(function () use ($relation, $rows, $roleAttribute, $defaultRole) {
+            $rel = $this->resolveAuditedRelation($relation);
 
-        $extractRole = fn($v) => $v === null
-            ? $defaultRole
-            : ($v instanceof \BackedEnum ? (string) $v->value : (string) $v);
+            $extractRole = fn($v) => $v === null
+                ? $defaultRole
+                : ($v instanceof \BackedEnum ? (string) $v->value : (string) $v);
 
-        // Current: "id:role" => current order
-        $cur = $rel->withPivot($roleAttribute, 'order')->get()
-            ->mapWithKeys(fn($r) => [
-                (int) $r->getKey() . ':' . $extractRole($r->pivot->{$roleAttribute}) => (int) $r->pivot->order,
-            ]);
+            // Current: "id:role" => current order
+            $cur = $rel->withPivot($roleAttribute, 'order')->get()
+                ->mapWithKeys(fn($r) => [
+                    (int) $r->getKey() . ':' . $extractRole($r->pivot->{$roleAttribute}) => (int) $r->pivot->order,
+                ]);
 
-        // Desired: "id:role" => desired order (1-based)
-        $des = collect($rows)
-            ->filter(fn($r) => !empty($r['id']))
-            ->values()
-            ->mapWithKeys(fn($r, $i) => [
-                (int) $r['id'] . ':' . ($r[$roleAttribute] ?? $defaultRole) => $i + 1,
-            ]);
+            // Desired: "id:role" => desired order (1-based)
+            $des = collect($rows)
+                ->filter(fn($r) => !empty($r['id']))
+                ->values()
+                ->mapWithKeys(fn($r, $i) => [
+                    (int) $r['id'] . ':' . ($r[$roleAttribute] ?? $defaultRole) => $i + 1,
+                ]);
 
-        $attached = [];
-        $detached = [];
+            $attached = [];
+            $detached = [];
 
-        // Detach (id,role) pairs absent from desired
-        foreach ($cur->diffKeys($des) as $key => $_) {
-            [$id, $role] = explode(':', $key, 2);
-            $rel->wherePivot($roleAttribute, $role)->detach((int) $id);
-            $this->writeRelationAudit('detach', $relation, $rel, (int) $id, [$roleAttribute => $role]);
-            $detached[] = (int) $id;
-        }
-
-        // Attach new (id,role) pairs
-        foreach ($des->diffKeys($cur) as $key => $order) {
-            [$id, $role] = explode(':', $key, 2);
-            $rel->attach((int) $id, [$roleAttribute => $role, 'order' => $order]);
-            $this->writeRelationAudit('attach', $relation, $rel, (int) $id, [$roleAttribute => $role]);
-            $attached[] = (int) $id;
-        }
-
-        // Silent reorder for (id,role) pairs that remain but order changed
-        foreach ($des->intersectByKeys($cur) as $key => $order) {
-            if ($cur[$key] !== $order) {
+            // Detach (id,role) pairs absent from desired
+            foreach ($cur->diffKeys($des) as $key => $_) {
                 [$id, $role] = explode(':', $key, 2);
-                $this->silentPivotUpdate($rel, (int) $id, ['order' => $order], [$roleAttribute => $role]);
+                $rel->wherePivot($roleAttribute, $role)->detach((int) $id);
+                $this->writeRelationAudit('detach', $relation, $rel, (int) $id, [$roleAttribute => $role]);
+                $detached[] = (int) $id;
             }
-        }
 
-        return ['attached' => $attached, 'detached' => $detached, 'updated' => []];
+            // Attach new (id,role) pairs
+            foreach ($des->diffKeys($cur) as $key => $order) {
+                [$id, $role] = explode(':', $key, 2);
+                $rel->attach((int) $id, [$roleAttribute => $role, 'order' => $order]);
+                $this->writeRelationAudit('attach', $relation, $rel, (int) $id, [$roleAttribute => $role]);
+                $attached[] = (int) $id;
+            }
+
+            // Silent reorder for (id,role) pairs that remain but order changed
+            foreach ($des->intersectByKeys($cur) as $key => $order) {
+                if ($cur[$key] !== $order) {
+                    [$id, $role] = explode(':', $key, 2);
+                    $this->silentPivotUpdate($rel, (int) $id, ['order' => $order], [$roleAttribute => $role]);
+                }
+            }
+
+            return ['attached' => $attached, 'detached' => $detached, 'updated' => []];
+        });
     }
 
     // ── helpers ────────────────────────────────────────────────────────────

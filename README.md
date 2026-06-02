@@ -9,6 +9,7 @@ A collection of Laravel helper classes including ordered pivot relationships fun
 ## Table of Contents
 
 - [Installation](#installation)
+- [Audited Relations](#audited-relations)
 - [Ordered Pivot Relationships](#ordered-pivot-relationships)
   - [Quick Start](#quick-start)
   - [Components](#components)
@@ -28,9 +29,94 @@ composer require kolydart/laravel
 
 The service provider will be automatically registered via Laravel's package auto-discovery.
 
+## Audited Relations
+
+The `HasAuditedRelations` trait provides audited variants of `BelongsToMany` pivot operations. Audit entries are written on the **parent** model — never on pivot models — which avoids double-audits and lets you reverse-query from either side of the relation.
+
+### When to use
+
+Use `HasAuditedRelations` on a parent model when you need to:
+
+- audit `attach` / `detach` / `sync` / `toggle` operations on a relation
+- record additional pivot attributes (e.g. `role`)
+- reorder a `BelongsToMany` relation **silently** (no phantom audit entries)
+- avoid the double-audit problem caused by pivot models using `Auditable`
+
+```php
+use Kolydart\Laravel\App\Traits\HasAuditedRelations;
+
+class Item extends Model
+{
+    use HasAuditedRelations;
+
+    public function agents() { return $this->belongsToMany(Agent::class)->withPivot('role', 'order'); }
+    public function instruments() { return $this->belongsToMany(Instrument::class)->withPivot('order'); }
+}
+
+// In a controller:
+$item->auditedSyncRoledPivot('agents', $request->input('agents', []));
+$item->auditedSyncWithOrder('instruments', $request->input('instruments', []));
+$item->auditedSync('languages', $request->input('languages', []));
+$item->auditedAttach('places', $place);
+$item->auditedDetach('places', $place);
+```
+
+### API
+
+| Method | Use case |
+|--------|----------|
+| `auditedAttach(string $relation, $id, array $attrs = [], bool $touch = true)` | Single (or batch) attach with audit |
+| `auditedDetach(string $relation, $ids = null, bool $touch = true): int` | Detach with audit. `null` detaches all. |
+| `auditedSync(string $relation, $ids, bool $detaching = true): array` | Full sync, equivalent to `sync()` |
+| `auditedSyncWithoutDetaching(string $relation, $ids): array` | Wrapper around `auditedSync(..., false)` |
+| `auditedToggle(string $relation, $ids, bool $touch = true): array` | Toggle with audit |
+| `auditedSyncWithOrder(string $relation, array $ids, string $orderColumn = 'order'): array` | Ordered sync — smart-diff, silent reorder |
+| `auditedSyncRoledPivot(string $relation, array $rows, string $roleAttribute = 'role', string $defaultRole = 'creator'): array` | Sync where identity is `(related_id, role)`. Role change = detach + attach. |
+
+Each method is wrapped in a transaction so that pivot mutation and audit write succeed or fail atomically.
+
+#### Audit payload
+
+```json
+{
+  "action":        "attach" | "detach" | "update",
+  "relation":      "agents",
+  "role":          "creator",
+  "related_id":    42,
+  "related_type":  "App\\Models\\Agent",
+  "related_label": "John Doe"
+}
+```
+
+The audit `description` is `relation_attach`, `relation_detach`, or `relation_update`, and `subject_type` / `subject_id` always point to the parent model.
+
+### Important: do not use `Auditable` on pivot models
+
+The recommended strategy is **parent-side audits only**. Pivot models (those extending `Illuminate\Database\Eloquent\Relations\Pivot`) should **not** use `Auditable`. Otherwise, a single `attach()`/`detach()` produces two audit entries: one parent-side (from `HasAuditedRelations`) and one pivot-side (from the pivot's `Auditable`).
+
+### Migration guide for existing installations
+
+If you currently rely on pivot-side `Auditable`, migrate as follows:
+
+1. Locate pivot models using `Auditable` whose parent has, or will have, `HasAuditedRelations`:
+   ```bash
+   grep -rln "use App\\\\Traits\\\\Auditable" app/Models/ | xargs grep -l "extends Pivot"
+   ```
+2. Locate raw `sync()` / `attach()` / `detach()` / legacy `syncWithOrder` / `syncRoledPivot` calls in controllers that operate on audited relations:
+   ```bash
+   grep -rn "->sync(\|->attach(\|->detach(\|syncWithOrder\|syncRoledPivot" app/Http/Controllers/ --include="*.php"
+   ```
+3. Replace those calls with the `audited*` equivalents (`auditedSync`, `auditedSyncWithOrder`, `auditedSyncRoledPivot`).
+4. Remove `use Auditable;` from the matching pivot models — both the trait use and the `App\Traits\Auditable` import.
+5. Add `HasAuditedRelations` to any parent model not yet using it.
+
+After migration, audited operations emit a single parent-side audit entry per affected related record.
+
 ## Ordered Pivot Relationships
 
 This package provides functionality to maintain order in many-to-many (pivot) relationships. This abstraction allows you to preserve the selection order of related models, which is particularly useful for forms where the order of selection matters.
+
+> **Deprecation note (audited workflows):** the `syncWithOrder()` helpers in `HasOrderedPivot` and `HandlesOrderedPivot` are now smart-diff and phantom-event-free, but they do **not** produce audit entries. For audited operations use [`HasAuditedRelations::auditedSyncWithOrder()`](#audited-relations) on the parent model instead. The legacy helpers remain available for unaudited use cases and to keep existing installations working unchanged.
 
 ### Quick Start
 
