@@ -2,13 +2,15 @@
 
 namespace Kolydart\Laravel\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\Tests\TestCase;
 use Kolydart\Laravel\App\Traits\HasOrderedPivot;
 use Kolydart\Laravel\App\Traits\HandlesOrderedPivot;
 
 class OrderedPivotTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_can_create_ordered_belongs_to_many_relationship()
     {
         $mock = $this->createMockModel();
@@ -19,7 +21,7 @@ class OrderedPivotTest extends TestCase
         $this->assertTrue(method_exists($mock, 'getOrderedIds'));
     }
 
-    /** @test */
+    #[Test]
     public function controller_trait_has_required_methods()
     {
         $controller = new TestController();
@@ -29,7 +31,7 @@ class OrderedPivotTest extends TestCase
         $this->assertTrue(method_exists($controller, 'prepareOrderedRelationshipForEdit'));
     }
 
-    /** @test */
+    #[Test]
     public function it_validates_relationship_method_exists()
     {
         $controller = new TestController();
@@ -41,7 +43,7 @@ class OrderedPivotTest extends TestCase
         $this->callProtectedMethod($controller, 'syncWithOrder', [$model, 'nonexistent', []]);
     }
 
-    /** @test */
+    #[Test]
     public function it_filters_empty_ids()
     {
         $controller = new TestController();

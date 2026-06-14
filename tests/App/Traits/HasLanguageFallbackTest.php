@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\App\Traits;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\Tests\TestCase;
 use Kolydart\Laravel\App\Traits\HasLanguageFallback;
 use Illuminate\Database\Eloquent\Model;
@@ -16,13 +18,13 @@ class HasLanguageFallbackTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_exists()
     {
         $this->assertTrue(trait_exists(HasLanguageFallback::class));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_title_fallback_for_greek_locale()
     {
         // Mock App facade for Greek locale
@@ -48,7 +50,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Greek Title', $model->title_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_title_fallback_for_english_locale()
     {
         // Mock App facade for English locale
@@ -74,7 +76,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('English Title', $model->title_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_description_fallback_for_greek_locale()
     {
         // Mock App facade for Greek locale
@@ -100,7 +102,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Greek Description', $model->description_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_description_fallback_for_english_locale()
     {
         // Mock App facade for English locale
@@ -126,7 +128,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('English Description', $model->description_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_name_fallback_for_greek_locale()
     {
         // Mock App facade for Greek locale
@@ -152,7 +154,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Greek Name', $model->name_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_name_fallback_for_english_locale()
     {
         // Mock App facade for English locale
@@ -178,7 +180,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('English Name', $model->name_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_falls_back_to_next_priority_when_preferred_field_is_null()
     {
         // Test Greek locale cascade when primary field is null
@@ -218,7 +220,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Alternative Title', $model->title_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_handles_console_environment_gracefully()
     {
         // Mock App facade to throw an exception
@@ -247,7 +249,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Alternative Title', $model->title_fallback);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_direct_fallback_for_any_field()
     {
         // Create test model with Greek locale
@@ -309,7 +311,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertNull($model->getFallback('nonexistent'));
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_secondary_values_for_greek_locale()
     {
         // Mock App facade for Greek locale
@@ -342,7 +344,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Alternative Title', $model->title_secondary);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_secondary_values_for_english_locale()
     {
         // Mock App facade for English locale
@@ -375,7 +377,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Greek Title', $model->title_secondary);
     }
 
-    /** @test */
+    #[Test]
     public function it_provides_secondary_values_for_custom_fields()
     {
         // Create test model with Greek locale
@@ -424,7 +426,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertEquals('Alt Custom', $model->getSecondary('custom'));
     }
 
-    /** @test */
+    #[Test]
     public function it_returns_null_for_secondary_when_only_fallback_value_exists()
     {
         // Greek locale test
@@ -462,7 +464,7 @@ class HasLanguageFallbackTest extends TestCase
         $this->assertNull($model->title_secondary);
     }
 
-    /** @test */
+    #[Test]
     public function secondary_values_are_strings_not_arrays()
     {
         // Greek locale test

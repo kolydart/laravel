@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\App\Http\Middleware;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\App\Http\Middleware\AccessControl;
 use Kolydart\Laravel\Tests\TestCase;
 use Illuminate\Contracts\Foundation\Application;
@@ -11,13 +13,13 @@ use ReflectionClass;
 
 class AccessControlTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_exists()
     {
         $this->assertTrue(class_exists(AccessControl::class));
     }
 
-    /** @test */
+    #[Test]
     public function it_constructs_with_role_model_detection()
     {
         // Create a mock application
@@ -36,7 +38,7 @@ class AccessControlTest extends TestCase
         $this->assertTrue($reflection->hasProperty('roleModel'));
     }
 
-    /** @test */
+    #[Test]
     public function it_dynamically_determines_role_model_class()
     {
         // Create a mock application
@@ -59,7 +61,7 @@ class AccessControlTest extends TestCase
         $this->assertEquals('App\Models\Role', $roleModelClass);
     }
 
-    /** @test */
+    #[Test]
     public function it_uses_cache_only_in_production()
     {
         // Create a mock application - production environment

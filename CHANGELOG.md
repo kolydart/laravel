@@ -21,8 +21,15 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 - All audited mutating methods are wrapped in
   `$this->getConnection()->transaction(...)` for atomic pivot + audit writes.
 
+- Laravel 12 support. `require-dev` now spans `^10.0|^11.0|^12.0` for the
+  `illuminate/*` components and `laravel/framework`, and the suite is verified
+  against Laravel 12 (`v12.x`) and Laravel 11.
+
 ### Changed
 
+- Test suite now targets PHPUnit `^10.0|^11.0` (was `^9.0`) and uses native
+  `#[Test]` attributes instead of the deprecated `/** @test */` doc-comment
+  metadata, eliminating PHPUnit deprecation notices on PHPUnit 11.
 - `HandlesOrderedPivot::syncWithOrder()` and `HasOrderedPivot::syncWithOrder()`
   now use a smart-diff (attach/detach only changed records, silent reorder
   for unchanged records). The previous detach-all + reattach-all behaviour

@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\Providers;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\Tests\TestCase;
 use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Support\Facades\Event;
@@ -29,7 +31,7 @@ class DbSeedProtectionServiceProviderTest extends TestCase
         Event::setFacadeApplication($this->app);
     }
 
-    /** @test */
+    #[Test]
     public function it_prevents_seeding_in_production(): void
     {
         // Set environment to production
@@ -55,7 +57,7 @@ class DbSeedProtectionServiceProviderTest extends TestCase
         $dispatcher->dispatch(new CommandStarting($command, $input, $output));
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_seeding_in_non_production(): void
     {
         // Set environment to local
@@ -68,8 +70,9 @@ class DbSeedProtectionServiceProviderTest extends TestCase
         $provider = new DbSeedProtectionServiceProvider($this->app);
         $provider->boot();
 
-        // Create a mock command, input and output
-        $command = new Command('db:seed');
+        // Create the command name, input and output.
+        // CommandStarting::$command is the command name (string), not a Command instance.
+        $command = 'db:seed';
         $input = new ArrayInput(['command' => 'db:seed']);
         $output = new NullOutput();
 
@@ -81,7 +84,7 @@ class DbSeedProtectionServiceProviderTest extends TestCase
         $this->assertTrue(true);
     }
 
-    /** @test */
+    #[Test]
     public function it_allows_seeding_from_seed_static_command_in_production(): void
     {
         // Set environment to production

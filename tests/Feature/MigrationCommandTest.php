@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\Feature;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\Tests\TestCase;
 use Kolydart\Laravel\App\Console\Commands\MakeOrderedPivotMigration;
 use Illuminate\Filesystem\Filesystem;
@@ -22,7 +24,7 @@ class MigrationCommandTest extends TestCase
         parent::tearDown();
     }
 
-    /** @test */
+    #[Test]
     public function it_can_generate_migration_without_after_clause()
     {
         $command = new MakeOrderedPivotMigration($this->files);
@@ -45,7 +47,7 @@ class MigrationCommandTest extends TestCase
         $this->assertStringContains('$table->dropColumn(\'order\');', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_generate_migration_with_after_clause()
     {
         $command = new MakeOrderedPivotMigration($this->files);
@@ -65,7 +67,7 @@ class MigrationCommandTest extends TestCase
         $this->assertStringContains('$table->dropColumn(\'order\');', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_can_generate_migration_with_custom_order_column()
     {
         $command = new MakeOrderedPivotMigration($this->files);
@@ -84,7 +86,7 @@ class MigrationCommandTest extends TestCase
         $this->assertStringContains('$table->dropColumn(\'sort_order\');', $result);
     }
 
-    /** @test */
+    #[Test]
     public function it_generates_proper_migration_path()
     {
         $command = new MakeOrderedPivotMigration($this->files);

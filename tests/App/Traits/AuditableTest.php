@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\App\Traits;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Config\Repository as Config;
 use Illuminate\Container\Container;
 use Illuminate\Database\Eloquent\Model;
@@ -29,7 +31,7 @@ class AuditableTest extends TestCase
     }
     // ── getAuditLogIp ──────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function get_audit_log_ip_returns_null_when_store_ip_is_false(): void
     {
         Container::setInstance($this->app);
@@ -38,7 +40,7 @@ class AuditableTest extends TestCase
         $this->assertNull($this->makeIpResolver()::resolveIp());
     }
 
-    /** @test */
+    #[Test]
     public function get_audit_log_ip_returns_request_ip_when_store_ip_is_true(): void
     {
         Container::setInstance($this->app);
@@ -48,7 +50,7 @@ class AuditableTest extends TestCase
         $this->assertSame('1.2.3.4', $this->makeIpResolver()::resolveIp());
     }
 
-    /** @test */
+    #[Test]
     public function get_audit_log_ip_returns_request_ip_when_config_absent_defaulting_to_true(): void
     {
         Container::setInstance($this->app);
@@ -60,13 +62,13 @@ class AuditableTest extends TestCase
 
     // ── structural ─────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function it_exists()
     {
         $this->assertTrue(trait_exists(Auditable::class));
     }
 
-    /** @test */
+    #[Test]
     public function it_has_required_methods()
     {
         // Create a mock class using the trait
@@ -82,7 +84,7 @@ class AuditableTest extends TestCase
         $this->assertTrue($reflection->hasMethod('audit'));
     }
 
-    /** @test */
+    #[Test]
     public function get_audit_log_model_returns_app_audit_log_when_models_namespace_does_not_exist()
     {
         $mock = new class extends Model {
@@ -98,7 +100,7 @@ class AuditableTest extends TestCase
         $this->assertSame('App\AuditLog', $mock::resolveAuditLogModel());
     }
 
-    /** @test */
+    #[Test]
     public function get_audit_log_model_returns_models_namespace_when_it_exists()
     {
         // Dynamically define App\Models\AuditLog for this test

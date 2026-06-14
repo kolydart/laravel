@@ -2,6 +2,10 @@
 
 namespace Kolydart\Laravel\Tests\App\Traits;
 
+use PHPUnit\Framework\Attributes\Test;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
+use PHPUnit\Framework\Attributes\PreserveGlobalState;
+
 use Illuminate\Config\Repository;
 use Illuminate\Container\Container;
 use Illuminate\Events\Dispatcher;
@@ -76,13 +80,13 @@ class ImpersonatableTest extends TestCase
 
     // ── Structural ─────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function it_exists(): void
     {
         $this->assertTrue(trait_exists(Impersonatable::class));
     }
 
-    /** @test */
+    #[Test]
     public function it_has_required_methods(): void
     {
         $mock = new class {
@@ -96,11 +100,9 @@ class ImpersonatableTest extends TestCase
 
     // ── auditImpersonation host ────────────────────────────────────────────
 
-    /**
-     * @test
-     * @runInSeparateProcess
-     * @preserveGlobalState disabled
-     */
+    #[Test]
+    #[RunInSeparateProcess]
+    #[PreserveGlobalState(false)]
     public function audit_impersonation_host_is_null(): void
     {
         eval('namespace App\Models; class AuditLog {
@@ -124,7 +126,7 @@ class ImpersonatableTest extends TestCase
 
     // ── auditImpersonation class resolution ────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function audit_impersonation_resolves_models_namespace_when_class_exists(): void
     {
         if (!class_exists('App\Models\AuditLog')) {
@@ -137,7 +139,7 @@ class ImpersonatableTest extends TestCase
         $this->assertSame('App\Models\AuditLog', $class);
     }
 
-    /** @test */
+    #[Test]
     public function audit_impersonation_returns_null_when_no_audit_log_exists(): void
     {
         $class = class_exists('App\Models\NoSuchLog') ? 'App\Models\NoSuchLog'
@@ -148,7 +150,7 @@ class ImpersonatableTest extends TestCase
 
     // ── Session guards (tested directly since abort_if needs full Gate) ────
 
-    /** @test */
+    #[Test]
     public function nested_impersonation_guard_aborts_409_when_session_is_active(): void
     {
         $sessionKey = $this->config->get('kolydart.impersonate.session_key');
@@ -164,7 +166,7 @@ class ImpersonatableTest extends TestCase
 
     // ── BC: scalar vs array session ────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function leave_impersonation_bc_handles_legacy_scalar_session_id(): void
     {
         $scalarStored = 42;
@@ -180,7 +182,7 @@ class ImpersonatableTest extends TestCase
 
     // ── Listener guard ─────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function listener_skips_reauth_when_impersonation_session_is_active(): void
     {
         $this->config->set('kolydart.impersonate.enabled', true);
@@ -210,13 +212,13 @@ class ImpersonatableTest extends TestCase
 
     // ── Middleware ─────────────────────────────────────────────────────────
 
-    /** @test */
+    #[Test]
     public function middleware_exists(): void
     {
         $this->assertTrue(class_exists(EnforceImpersonationTimeout::class));
     }
 
-    /** @test */
+    #[Test]
     public function middleware_passes_request_through_when_within_ttl(): void
     {
         $sessionKey = $this->config->get('kolydart.impersonate.session_key');
@@ -237,7 +239,7 @@ class ImpersonatableTest extends TestCase
         $this->assertTrue($passed);
     }
 
-    /** @test */
+    #[Test]
     public function middleware_detects_session_as_expired_when_ttl_exceeded(): void
     {
         $sessionKey = $this->config->get('kolydart.impersonate.session_key');

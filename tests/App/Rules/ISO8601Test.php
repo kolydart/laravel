@@ -2,12 +2,14 @@
 
 namespace Kolydart\Laravel\Tests\App\Rules;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\Tests\TestCase;
 use Kolydart\Laravel\App\Rules\ISO8601;
 
 class ISO8601Test extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_validates_valid_iso8601_dates()
     {
         $rule = new ISO8601();
@@ -18,7 +20,7 @@ class ISO8601Test extends TestCase
         $this->assertTrue($rule->passes('date', '1999-12-31'));
     }
 
-    /** @test */
+    #[Test]
     public function it_rejects_invalid_iso8601_dates()
     {
         $rule = new ISO8601();
@@ -39,7 +41,7 @@ class ISO8601Test extends TestCase
         $this->assertFalse($rule->passes('date', []));
     }
 
-    /** @test */
+    #[Test]
     public function it_has_an_error_message()
     {
         $rule = new ISO8601();

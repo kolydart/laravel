@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\App\Traits;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Illuminate\Database\Eloquent\Model;
 use Kolydart\Laravel\App\Traits\HasAuditedRelations;
 use Kolydart\Laravel\Tests\TestCase;
@@ -21,7 +23,7 @@ class HasAuditedRelationsTest extends TestCase
         };
     }
 
-    /** @test */
+    #[Test]
     public function trait_exposes_expected_public_methods(): void
     {
         $host = $this->makeHost();
@@ -35,7 +37,7 @@ class HasAuditedRelationsTest extends TestCase
         }
     }
 
-    /** @test */
+    #[Test]
     public function audited_sync_with_order_has_correct_signature(): void
     {
         $ref = new ReflectionMethod($this->makeHost(), 'auditedSyncWithOrder');
@@ -48,7 +50,7 @@ class HasAuditedRelationsTest extends TestCase
         $this->assertSame('order', $params[2]->getDefaultValue());
     }
 
-    /** @test */
+    #[Test]
     public function audited_sync_roled_pivot_has_correct_defaults(): void
     {
         $ref = new ReflectionMethod($this->makeHost(), 'auditedSyncRoledPivot');
@@ -59,7 +61,7 @@ class HasAuditedRelationsTest extends TestCase
         $this->assertSame('creator', $params[3]->getDefaultValue());
     }
 
-    /** @test */
+    #[Test]
     public function silent_pivot_update_is_protected(): void
     {
         $ref = new ReflectionMethod($this->makeHost(), 'silentPivotUpdate');
@@ -71,7 +73,7 @@ class HasAuditedRelationsTest extends TestCase
         $this->assertSame([], $params[3]->getDefaultValue());
     }
 
-    /** @test */
+    #[Test]
     public function normalize_audited_ids_accepts_int_array_collection_and_model(): void
     {
         $host = $this->makeHost();
@@ -97,7 +99,7 @@ class HasAuditedRelationsTest extends TestCase
         );
     }
 
-    /** @test */
+    #[Test]
     public function extract_role_from_pivot_returns_role_when_set(): void
     {
         $host = $this->makeHost();
@@ -109,7 +111,7 @@ class HasAuditedRelationsTest extends TestCase
         $this->assertNull($ref->invoke($host, ['role' => null]));
     }
 
-    /** @test */
+    #[Test]
     public function resolve_audited_relation_throws_for_undefined_relation(): void
     {
         $host = $this->makeHost();

@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\App\Http\Middleware;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\Tests\TestCase;
 use Kolydart\Laravel\App\Http\Middleware\BackendAccess;
 use Illuminate\Http\Request;
@@ -10,7 +12,7 @@ use Mockery;
 
 class BackendAccessTest extends TestCase
 {
-    /** @test */
+    #[Test]
     public function it_exists()
     {
         $this->assertTrue(class_exists(BackendAccess::class));

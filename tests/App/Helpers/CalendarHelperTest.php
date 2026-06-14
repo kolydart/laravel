@@ -2,14 +2,14 @@
 
 namespace Tests\App\Helpers;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use PHPUnit\Framework\TestCase;
 use Kolydart\Laravel\App\Helpers\CalendarHelper;
 
 class CalendarHelperTest extends TestCase
 {
-    /**
-     * @test
-     */
+    #[Test]
     public function it_can_convert_gregorian_to_julian_date()
     {
         $gregorianDate = '2024-03-20';
@@ -19,9 +19,7 @@ class CalendarHelperTest extends TestCase
         $this->assertEquals(2460390, $julianDate);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_can_convert_julian_to_gregorian_date()
     {
         $julianDate = '2024-03-20';
@@ -31,9 +29,7 @@ class CalendarHelperTest extends TestCase
         $this->assertEquals('2024-04-02', $gregorianDate);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_can_get_both_dates_for_gregorian_input()
     {
         $date = '2024-03-20';
@@ -46,9 +42,7 @@ class CalendarHelperTest extends TestCase
         $this->assertEquals('2024-04-02', $result['gregorian']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_can_get_both_dates_for_julian_input()
     {
         $date = '2024-03-20';
@@ -61,9 +55,7 @@ class CalendarHelperTest extends TestCase
         $this->assertEquals('2024-04-02', $result['gregorian']);
     }
 
-    /**
-     * @test
-     */
+    #[Test]
     public function it_handles_negative_years_correctly()
     {
         $gregorianDate = '-0001-12-31';

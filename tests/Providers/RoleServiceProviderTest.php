@@ -2,6 +2,8 @@
 
 namespace Kolydart\Laravel\Tests\Providers;
 
+use PHPUnit\Framework\Attributes\Test;
+
 use Kolydart\Laravel\Tests\TestCase;
 use Kolydart\Laravel\Providers\RoleServiceProvider;
 use Illuminate\Support\Facades\Gate;
@@ -37,32 +39,32 @@ class RoleServiceProviderTest extends TestCase
         $this->provider = new RoleServiceProvider($this->mockApp);
     }
 
-    /** @test */
+    #[Test]
     public function it_exists_and_can_be_instantiated(): void
     {
         $this->assertInstanceOf(RoleServiceProvider::class, $this->provider);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_register_method(): void
     {
         $this->assertTrue(method_exists($this->provider, 'register'));
     }
 
-    /** @test */
+    #[Test]
     public function it_has_boot_method(): void
     {
         $this->assertTrue(method_exists($this->provider, 'boot'));
     }
 
-    /** @test */
+    #[Test]
     public function register_method_returns_void(): void
     {
         $result = $this->provider->register();
         $this->assertNull($result);
     }
 
-    /** @test */
+    #[Test]
     public function it_has_protected_get_role_model_method(): void
     {
         $reflection = new ReflectionClass($this->provider);
@@ -72,7 +74,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue($method->isProtected());
     }
 
-    /** @test */
+    #[Test]
     public function it_has_protected_can_register_gates_method(): void
     {
         $reflection = new ReflectionClass($this->provider);
@@ -82,7 +84,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue($method->isProtected());
     }
 
-    /** @test */
+    #[Test]
     public function it_has_protected_can_check_roles_method(): void
     {
         $reflection = new ReflectionClass($this->provider);
@@ -92,7 +94,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue($method->isProtected());
     }
 
-    /** @test */
+    #[Test]
     public function it_has_protected_get_roles_method(): void
     {
         $reflection = new ReflectionClass($this->provider);
@@ -102,7 +104,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue($method->isProtected());
     }
 
-    /** @test */
+    #[Test]
     public function get_role_model_throws_exception_when_no_model_exists(): void
     {
         // Create a test provider that simulates no Role model existing
@@ -119,7 +121,7 @@ class RoleServiceProviderTest extends TestCase
         $testProvider->testGetRoleModel();
     }
 
-    /** @test */
+    #[Test]
     public function can_check_roles_calls_can_register_gates(): void
     {
         // Create a mock provider to test the relationship between methods
@@ -138,7 +140,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
+    #[Test]
     public function can_register_gates_handles_exceptions_gracefully(): void
     {
         // Create a provider that will throw an exception during safety checks
@@ -158,7 +160,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertFalse($result);
     }
 
-    /** @test */
+    #[Test]
     public function boot_method_handles_early_return_on_failed_safety_checks(): void
     {
         // Mock the provider to simulate failed safety checks
@@ -176,13 +178,13 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue(true);
     }
 
-    /** @test */
+    #[Test]
     public function provider_has_proper_inheritance(): void
     {
         $this->assertInstanceOf(\Illuminate\Support\ServiceProvider::class, $this->provider);
     }
 
-    /** @test */
+    #[Test]
     public function provider_stores_app_instance(): void
     {
         $reflection = new ReflectionClass($this->provider);
@@ -193,7 +195,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertSame($this->mockApp, $appInstance);
     }
 
-    /** @test */
+    #[Test]
     public function gate_variations_are_created_correctly(): void
     {
         // Test the gate variation logic manually
@@ -217,7 +219,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertEquals(['Student Publisher', 'student publisher', 'student_publisher'], array_values($actualVariations));
     }
 
-    /** @test */
+    #[Test]
     public function duplicate_gate_variations_are_removed(): void
     {
         // Test with a role that would create duplicate variations
@@ -236,7 +238,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertEquals(['admin'], array_values($uniqueVariations));
     }
 
-    /** @test */
+    #[Test]
     public function role_gate_callback_structure_is_correct(): void
     {
         // Test that the role gate callback expects the correct parameters
@@ -258,7 +260,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
+    #[Test]
     public function individual_role_gate_callback_structure_is_correct(): void
     {
         // Test that individual role gate callbacks expect the correct parameters
@@ -276,7 +278,7 @@ class RoleServiceProviderTest extends TestCase
         $this->assertTrue($result);
     }
 
-    /** @test */
+    #[Test]
     public function cache_key_is_consistent(): void
     {
         // Test that the cache key used is consistent
