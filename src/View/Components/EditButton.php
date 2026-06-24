@@ -41,6 +41,14 @@ class EditButton extends Component
             return;
         }
 
+        // Bail out if the edit route is not registered. A controller may keep its
+        // edit() method while the edit/update routes are intentionally removed
+        // (e.g. read-only resources), in which case route() would throw.
+        $editRouteName = RouterHelper::replaceMethodInRouterName();
+        if (!Route::has($editRouteName)) {
+            return;
+        }
+
         // Get the text for the edit button
         if (Lang::has('gw.edit')) {
             $this->text = trans('gw.edit');
@@ -52,7 +60,7 @@ class EditButton extends Component
 
         // Replace the 'show' method with 'edit' in the router name
         $this->url = route(
-            RouterHelper::replaceMethodInRouterName(),
+            $editRouteName,
             request()->segment(count(request()->segments()))
         );
 
