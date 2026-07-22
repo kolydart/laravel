@@ -3,6 +3,7 @@
 namespace Kolydart\Laravel\App\Traits;
 
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Kolydart\Laravel\App\Support\OrderedPivotSync;
 
 /**
  * Trait HasOrderedPivot
@@ -74,43 +75,18 @@ trait HasOrderedPivot
      * unchanged related records are not deleted/re-created. Order-only changes
      * update the pivot row silently (no pivot model events).
      *
-     * @deprecated Use `HasAuditedRelations::auditedSyncWithOrder()` on the
-     *             parent model for audited operations. This helper performs
-     *             pivot writes without producing audit entries.
+     * This is the canonical helper for models that are **not** audited. When the
+     * model uses `HasAuditedRelations`, prefer `auditedSyncWithOrder()` instead —
+     * it runs the same diff but also writes audit entries.
      *
      * @param BelongsToMany $relationship
      * @param array $ids Array of IDs in the desired order
      * @param string $orderColumn The name of the order column (default: 'order')
      * @return void
-     * @throws \InvalidArgumentException
      */
     public function syncWithOrder(BelongsToMany $relationship, array $ids, string $orderColumn = 'order'): void
     {
-        if (!$relationship instanceof BelongsToMany) {
-            throw new \InvalidArgumentException('Relationship must be a BelongsToMany relationship.');
-        }
-
-        $ids = array_values(array_filter($ids, fn($id) => !empty($id)));
-
-        $current = $relationship->withPivot($orderColumn)->get()
-            ->mapWithKeys(fn($r) => [(int) $r->getKey() => (int) $r->pivot->{$orderColumn}]);
-        $desired = collect($ids)->mapWithKeys(fn($id, $i) => [(int) $id => $i + 1]);
-
-        foreach ($current->keys()->diff($desired->keys()) as $id) {
-            $relationship->detach((int) $id);
-        }
-
-        foreach ($desired->keys()->diff($current->keys()) as $id) {
-            $relationship->attach((int) $id, [$orderColumn => $desired[$id]]);
-        }
-
-        foreach ($desired->intersectByKeys($current) as $id => $newOrder) {
-            if ($current[$id] !== $newOrder) {
-                $relationship->newPivotQuery()
-                    ->where($relationship->getRelatedPivotKeyName(), (int) $id)
-                    ->update([$orderColumn => $newOrder]);
-            }
-        }
+        OrderedPivotSync::apply($relationship, $ids, $orderColumn);
     }
 
     /**
@@ -119,14 +95,9 @@ trait HasOrderedPivot
      * @param BelongsToMany $relationship
      * @param string $orderColumn The name of the order column (default: 'order')
      * @return array
-     * @throws \InvalidArgumentException
      */
     public function getOrderedIds(BelongsToMany $relationship, string $orderColumn = 'order'): array
     {
-        if (!$relationship instanceof BelongsToMany) {
-            throw new \InvalidArgumentException('Relationship must be a BelongsToMany relationship.');
-        }
-
-        return $relationship->orderBy($orderColumn)->pluck($relationship->getRelated()->getKeyName())->toArray();
+        return OrderedPivotSync::orderedIds($relationship, $orderColumn);
     }
 }

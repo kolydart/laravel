@@ -11,6 +11,7 @@
     @param string $placeholder - Placeholder text
     @param bool $required - Whether the field is required
     @param string $class - Additional CSS classes
+    @param bool $dragReorder - Whether selected tags can be reordered by dragging (requires SortableJS)
     @param array $attributes - Additional HTML attributes
 --}}
 
@@ -23,6 +24,7 @@
     'placeholder' => 'Please select...',
     'required' => false,
     'class' => '',
+    'dragReorder' => true,
     'attributes' => []
 ])
 
@@ -52,6 +54,7 @@
     class="{{ $selectClass }}"
     @if($multiple) multiple @endif
     @if($required) required @endif
+    @if($multiple && $dragReorder) data-drag-reorder @endif
     @foreach($attributes as $attr => $value)
         {{ $attr }}="{{ $value }}"
     @endforeach

@@ -13,6 +13,7 @@ A collection of Laravel helper classes including ordered pivot relationships fun
 - [Ordered Pivot Relationships](#ordered-pivot-relationships)
   - [Quick Start](#quick-start)
   - [Components](#components)
+    - [Drag-to-reorder](#drag-to-reorder)
   - [Usage Examples](#usage-examples)
   - [API Reference](#api-reference)
   - [Migration from Manual Implementation](#migration-from-manual-implementation)
@@ -116,7 +117,7 @@ After migration, audited operations emit a single parent-side audit entry per af
 
 This package provides functionality to maintain order in many-to-many (pivot) relationships. This abstraction allows you to preserve the selection order of related models, which is particularly useful for forms where the order of selection matters.
 
-> **Deprecation note (audited workflows):** the `syncWithOrder()` helpers in `HasOrderedPivot` and `HandlesOrderedPivot` are now smart-diff and phantom-event-free, but they do **not** produce audit entries. For audited operations use [`HasAuditedRelations::auditedSyncWithOrder()`](#audited-relations) on the parent model instead. The legacy helpers remain available for unaudited use cases and to keep existing installations working unchanged.
+> **Which sync helper?** The `syncWithOrder()` helpers in `HasOrderedPivot` and `HandlesOrderedPivot` are smart-diff and phantom-event-free, and are the canonical path for **unaudited** models. They do **not** produce audit entries — when the parent model uses `HasAuditedRelations`, use [`auditedSyncWithOrder()`](#audited-relations) instead. All three compute their diff through the same implementation (`App\Support\OrderedPivotSync::diff()`), so ordering semantics are identical: 1-indexed, following the submitted array order. Only the application differs — the audited path pairs each attach/detach with an audit entry and wraps the whole operation in a transaction.
 
 ### Quick Start
 
@@ -221,9 +222,18 @@ Then in your Blade layout:
 
 ##### Manual inclusion (current setup):
 
+Publish the assets, then load them **after** Select2 and after whatever code calls `.select2()`:
+
+```bash
+php artisan vendor:publish --tag=kolydart-ordered-pivot-js
+```
+
 ```blade
+<script src="{{ asset('vendor/kolydart/js/Sortable.min.js') }}"></script>
 <script src="{{ asset('vendor/kolydart/js/ordered-select.js') }}"></script>
 ```
+
+`Sortable.min.js` (SortableJS 1.15.6) is bundled with the package and is only needed for [drag-to-reorder](#drag-to-reorder). Omit it and everything else keeps working.
 
 #### 5. Use in your Blade templates:
 
@@ -291,11 +301,34 @@ php artisan make:ordered-pivot-migration {table} [--order-column=order] [--after
 Preserves selection order in Select2 dropdowns and provides dynamic option management.
 
 **Methods:**
-- `OrderedSelect.init()` - Auto-initialize all elements with 'ordered-select' class
+- `OrderedSelect.init()` - Auto-initialize all elements with the 'ordered-select' class or the `data-drag-reorder` attribute
+- `OrderedSelect.enableDragReorder($select)` - Make the selected tags draggable (see [Drag-to-reorder](#drag-to-reorder))
 - `OrderedSelect.getOrderedValues($select)` - Get selected values in order
 - `OrderedSelect.setOrderedValues($select, values)` - Set values in specific order
 - `OrderedSelect.addOption($select, value, text, selected, preserveOrder)` - Add new option
 - `OrderedSelect.createAddForm($select, config)` - Create modal for adding options
+
+##### Drag-to-reorder
+
+`OrderedSelect` keeps the order in which items were **selected**. On top of that, already-selected tags can be **dragged** into a new order. Opt in per select with the `data-drag-reorder` attribute:
+
+```blade
+<select name="pages[]" id="pages" class="form-control select2" multiple data-drag-reorder>
+    @foreach($pages as $id => $page)
+        <option value="{{ $id }}" @selected(in_array($id, $selectedPages))>{{ $page }}</option>
+    @endforeach
+</select>
+```
+
+The `<x-kolydart::ordered-select>` component adds the attribute automatically for multiple selects; pass `:drag-reorder="false"` to switch it off.
+
+Notes:
+
+- Requires SortableJS. Load the bundled `vendor/kolydart/js/Sortable.min.js` before `ordered-select.js`. **If SortableJS is missing the feature is simply skipped** — selection-order behaviour is unaffected.
+- On drop, the tag order is mirrored onto the underlying `<option>` elements, so the submitted `name[]` order matches what the user sees, and `syncWithOrder()` / `auditedSyncWithOrder()` persist exactly that.
+- The Select2 search field stays pinned at the end of the tag list.
+- `cursor: move` on the tags is injected by the script; no stylesheet to publish.
+- The select must already be initialised by Select2 — `ordered-select.js` retries for ~1s to accommodate late initialisation.
 
 #### 5. Blade Component: `<x-kolydart::ordered-select>`
 

@@ -37,9 +37,11 @@ class OrderedPivotServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        // Publish JavaScript assets
+        // Publish JavaScript assets. Sortable.min.js (1.15.6) is bundled so the
+        // drag-to-reorder feature works offline, without a CDN dependency.
         $this->publishes([
             __DIR__ . '/../Resources/js/ordered-select.js' => public_path('vendor/kolydart/js/ordered-select.js'),
+            __DIR__ . '/../Resources/js/vendor/Sortable.min.js' => public_path('vendor/kolydart/js/Sortable.min.js'),
         ], 'kolydart-ordered-pivot-js');
 
         // Publish Blade components

@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\MorphToMany;
 use Illuminate\Support\Arr;
+use Kolydart\Laravel\App\Support\OrderedPivotSync;
 
 /**
  * Trait που εκθέτει audited variants των pivot operations
@@ -178,6 +179,11 @@ trait HasAuditedRelations
      * Smart diff: attaches new ids, detaches removed ids, silently reorders
      * ids that remain. Reorder-only changes produce NO audit entries.
      *
+     * The diff itself is computed by `OrderedPivotSync::diff()` — the same code
+     * path as the unaudited `syncWithOrder()` helpers — so ordering semantics
+     * are identical. Only the application differs: each attach/detach is paired
+     * with an audit entry here.
+     *
      * @param  string  $relation      relation method name (e.g. 'instruments')
      * @param  array   $ids           ordered flat list of related IDs
      * @param  string  $orderColumn   pivot column for order
@@ -187,40 +193,31 @@ trait HasAuditedRelations
     {
         return $this->getConnection()->transaction(function () use ($relation, $ids, $orderColumn) {
             $rel = $this->resolveAuditedRelation($relation);
-            $ids = array_values(array_filter($ids, fn($id) => !empty($id)));
-
-            // Current state: related_id => current order value
-            $cur = $rel->withPivot($orderColumn)->get()
-                ->mapWithKeys(fn($r) => [(int) $r->getKey() => (int) $r->pivot->{$orderColumn}]);
-
-            // Desired state: related_id => desired order (1-based)
-            $des = collect($ids)->mapWithKeys(fn($id, $i) => [(int) $id => $i + 1]);
+            $diff = OrderedPivotSync::diff($rel, $ids, $orderColumn);
 
             $detached = [];
             $attached = [];
 
             // Detach ids not present in desired
-            foreach ($cur->keys()->diff($des->keys()) as $id) {
-                $snap = $this->snapshotRelatedForDetach($rel, [(int) $id]);
-                $rel->detach((int) $id);
+            foreach ($diff['detach'] as $id) {
+                $snap = $this->snapshotRelatedForDetach($rel, [$id]);
+                $rel->detach($id);
                 foreach ($snap as $row) {
                     $this->writeRelationAudit('detach', $relation, $rel, (int) $row['related_id'], $row['pivot']);
                 }
-                $detached[] = (int) $id;
+                $detached[] = $id;
             }
 
             // Attach ids not present in current
-            foreach ($des->keys()->diff($cur->keys()) as $id) {
-                $rel->attach((int) $id, [$orderColumn => $des[$id]]);
-                $this->writeRelationAudit('attach', $relation, $rel, (int) $id, [$orderColumn => $des[$id]]);
-                $attached[] = (int) $id;
+            foreach ($diff['attach'] as $id => $order) {
+                $rel->attach($id, [$orderColumn => $order]);
+                $this->writeRelationAudit('attach', $relation, $rel, $id, [$orderColumn => $order]);
+                $attached[] = $id;
             }
 
             // Silent reorder for ids that remain but whose order changed
-            foreach ($des->intersectByKeys($cur) as $id => $newOrder) {
-                if ($cur[$id] !== $newOrder) {
-                    $this->silentPivotUpdate($rel, (int) $id, [$orderColumn => $newOrder]);
-                }
+            foreach ($diff['reorder'] as $id => $order) {
+                $this->silentPivotUpdate($rel, $id, [$orderColumn => $order]);
             }
 
             return ['attached' => $attached, 'detached' => $detached, 'updated' => []];
