@@ -33,6 +33,26 @@ use Laravel\Dusk\Browser;
  * protected string $modelNamespace = 'App\\';      // or 'App\\Models\\'
  * ```
  *
+ * `$ignoredConsolePatterns` is merged on top of `defaultIgnoredConsolePatterns()`,
+ * so a project lists only what is specific to it. A second list,
+ * `defaultIgnoredResourceHosts()`, suppresses third-party hosts only when the
+ * entry is also a load failure — see those methods for the reasoning.
+ *
+ * To drop one of the shared defaults, override the method. A trait method has no
+ * `parent::`, so alias it first rather than re-listing the whole array, which
+ * would silently drift from the package:
+ *
+ * ```php
+ * use InteractsWithSmokeCrawler {
+ *     defaultIgnoredConsolePatterns as packageIgnoredConsolePatterns;
+ * }
+ *
+ * protected function defaultIgnoredConsolePatterns(): array
+ * {
+ *     return array_diff($this->packageIgnoredConsolePatterns(), ['favicon.ico']);
+ * }
+ * ```
+ *
  * Usage (in `tests/Browser/SmokeTest.php`):
  *
  * ```php
@@ -142,24 +162,17 @@ trait InteractsWithSmokeCrawler
         }
 
         // 2. Console SEVERE errors
-        $ignored = $this->ignoredConsolePatterns ?? [];
-        $logs = collect($browser->driver->manage()->getLog('browser'))
-            ->where('level', 'SEVERE')
-            ->reject(function ($entry) use ($ignored) {
-                foreach ($ignored as $pattern) {
-                    if (Str::contains($entry['message'] ?? '', $pattern)) {
-                        return true;
-                    }
-                }
-
-                return false;
-            })
-            ->values();
+        $logs = $this->significantConsoleErrors($browser->driver->manage()->getLog('browser'));
 
         if ($logs->isNotEmpty()) {
             fwrite(STDOUT, "FAIL (console errors)\n");
 
-            return "Route {$name} ({$uri}): console errors:\n  - ".$logs->pluck('message')->implode("\n  - ");
+            // Not pluck('message'): WebDriver has been seen to return entries with no
+            // message key, which would render as an empty bullet — a failure with no
+            // way to act on it. Fall back to the raw entry.
+            $rendered = $logs->map(fn ($entry) => $entry['message'] ?? json_encode($entry));
+
+            return "Route {$name} ({$uri}): console errors:\n  - ".$rendered->implode("\n  - ");
         }
 
         // 3. Rendered server-error indicators
@@ -174,6 +187,99 @@ trait InteractsWithSmokeCrawler
         fwrite(STDOUT, "ok\n");
 
         return null;
+    }
+
+    /**
+     * Reduce a raw browser log to the entries a smoke run should fail on: SEVERE
+     * level, minus the ignored ones.
+     *
+     * Two filters, deliberately not one. An unconditional pattern drops the entry
+     * wherever it matches; a third-party host only drops it when the entry is also
+     * a *resource load failure*. See `defaultIgnoredResourceHosts()` for why the
+     * distinction is load-bearing.
+     *
+     * Kept free of the WebDriver so the filtering contract is unit-testable
+     * without a browser.
+     *
+     * @param  array<int, array{level?: string, message?: string}>  $entries
+     * @return Collection<int, array{level?: string, message?: string}>
+     */
+    protected function significantConsoleErrors(array $entries): Collection
+    {
+        $ignored = array_unique(array_merge(
+            $this->defaultIgnoredConsolePatterns(),
+            $this->ignoredConsolePatterns ?? []
+        ));
+        $hosts = $this->defaultIgnoredResourceHosts();
+
+        // Chrome's wording when a resource never arrived, as opposed to any other
+        // reason its URL might appear in a message (a CSP refusal, a stack frame,
+        // an app-thrown error quoting it).
+        $loadFailure = ['Failed to load resource', 'net::ERR_'];
+
+        return collect($entries)
+            ->where('level', 'SEVERE')
+            ->reject(function ($entry) use ($ignored, $hosts, $loadFailure) {
+                $message = $entry['message'] ?? '';
+
+                if (Str::contains($message, $ignored)) {
+                    return true;
+                }
+
+                return Str::contains($message, $hosts)
+                    && Str::contains($message, $loadFailure);
+            })
+            ->values();
+    }
+
+    /**
+     * Console noise every installation ignores unconditionally, merged with the
+     * project's own `$ignoredConsolePatterns`. Declared as a method, not a
+     * property, so the trait introduces no properties of its own and can never
+     * collide with a consuming class's declaration.
+     *
+     * Browser-chrome artefacts only: things the browser says about itself, which
+     * carry no information about the application under test.
+     *
+     * Do NOT add generic network-error strings (`ERR_CONNECTION_CLOSED`,
+     * `Failed to load resource`) here: those also cover the application's own
+     * assets and XHR, which is exactly what the crawler exists to catch.
+     *
+     * @return array<int, string>
+     */
+    protected function defaultIgnoredConsolePatterns(): array
+    {
+        return [
+            'favicon.ico',
+            'chrome-extension://',
+            'DevTools failed to load',
+        ];
+    }
+
+    /**
+     * Third-party asset hosts whose *failed requests* are ignored, because a smoke
+     * test measures the application, not the public internet — a transient
+     * `fonts.gstatic.com` ERR_CONNECTION_CLOSED would otherwise fail whichever
+     * route happened to be loading at the time, reading as a regression on an
+     * unrelated page.
+     *
+     * Matched only in combination with a load-failure marker, never on the
+     * hostname alone. The difference is not academic: an app that ships a CSP
+     * blocking its own Google Fonts stylesheet logs
+     * `Refused to load the stylesheet 'https://fonts.googleapis.com/…'` — an
+     * application misconfiguration that a bare hostname match would bury, leaving
+     * fonts broken site-wide with a green suite.
+     *
+     * @return array<int, string>
+     */
+    protected function defaultIgnoredResourceHosts(): array
+    {
+        return [
+            'fonts.googleapis.com',
+            'fonts.gstatic.com',
+            'google-analytics.com',
+            'googletagmanager.com',
+        ];
     }
 
     /**

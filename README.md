@@ -19,6 +19,8 @@ A collection of Laravel helper classes including ordered pivot relationships fun
   - [Migration from Manual Implementation](#migration-from-manual-implementation)
 - [Additional Components](#additional-components)
 - [Testing Helpers](#testing-helpers)
+  - [`InteractsWithDatatables`](#interactswithdatatables)
+  - [`InteractsWithSmokeCrawler`](#interactswithsmokecrawler)
 - [Testing](#testing)
 - [License](#license)
 
@@ -824,6 +826,32 @@ public function datatable_ajax_loads_without_errors(): void
 ```
 
 Full documentation, including what the helper catches and its limitations, is in [`src/docs/datatable-ajax-testing.md`](src/docs/datatable-ajax-testing.md).
+
+### `InteractsWithSmokeCrawler`
+
+Trait holding the shared machinery for the Laravel Dusk "browser smoke crawler" pattern: a test that visits every active GET page as a real browser and fails on browser-side errors (JS alerts, console SEVERE errors, rendered `.alert-danger`) that the headless PHPUnit suite cannot see. It provides route discovery, parametrized-URI resolution, the visit-and-assert loop, console-log filtering, and a deterministic page-settle wait — but not the `#[Test]` methods or `getAdminUser()`, which differ per project.
+
+Mix it into `tests/Browser/SmokeTest.php` and declare the config it reads (all optional):
+
+```php
+use Kolydart\Laravel\App\Testing\InteractsWithSmokeCrawler;
+
+class SmokeTest extends DuskTestCase
+{
+    use InteractsWithSmokeCrawler;
+
+    protected array $skipNames = ['admin.logout', 'admin.users.massDestroy'];
+    protected array $skipUriPrefixes = ['_debugbar', 'livewire/', 'api/'];
+    protected array $ignoredConsolePatterns = ['/conversions/'];
+    protected string $modelNamespace = 'App\\Models\\';
+
+    // ... #[Test] methods + getAdminUser() ...
+}
+```
+
+Console noise is filtered in two passes: `defaultIgnoredConsolePatterns()` drops browser-chrome artefacts wherever they match (and is merged with the project's `$ignoredConsolePatterns`), while `defaultIgnoredResourceHosts()` drops third-party asset hosts **only when the entry is also a load failure** — so a transient Google Fonts outage does not fail an unrelated route, but a CSP refusal naming that same host still does.
+
+Full documentation, including the configuration contract and how to drop a shared default, is in [`src/docs/browser-smoke-testing.md`](src/docs/browser-smoke-testing.md).
 
 ## Testing
 
