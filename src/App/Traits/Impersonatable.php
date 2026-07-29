@@ -6,6 +6,7 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Route;
 
 trait Impersonatable
 {
@@ -38,6 +39,13 @@ trait Impersonatable
             'Cannot impersonate an admin'
         );
 
+        // Guard: model-level opt-out (e.g. unverified accounts)
+        abort_if(
+            method_exists($user, 'canBeImpersonated') && !$user->canBeImpersonated(),
+            403,
+            'User cannot be impersonated'
+        );
+
         $adminId = auth()->id();
 
         session([$sessionKey => [
@@ -49,7 +57,7 @@ trait Impersonatable
 
         $this->auditImpersonation('impersonation_start', $adminId, $user->id);
 
-        return redirect()->route('admin.home');
+        return redirect()->to($this->impersonationStartUrl($user));
     }
 
     public function leaveImpersonation(): RedirectResponse
@@ -78,7 +86,40 @@ trait Impersonatable
         Auth::login($admin);
         $this->auditImpersonation('impersonation_end', $adminId, $targetId);
 
-        return redirect()->route('admin.users.index');
+        return redirect()->to(
+            $this->impersonationRouteUrl(config('kolydart.impersonate.redirect_back_to', 'admin.users.index'))
+        );
+    }
+
+    /**
+     * Where the admin lands once impersonation starts.
+     *
+     * Defaults to `admin.home`, but a user without backend access would only
+     * get a 403 there, so such users are sent to `frontend.home` instead.
+     * Override with the `kolydart.impersonate.redirect_to` config key.
+     *
+     * @note Call after Auth::login(): BackendAccessible::has_backend_access()
+     *       reports on the currently authenticated user.
+     */
+    protected function impersonationStartUrl($user): string
+    {
+        $route = config('kolydart.impersonate.redirect_to');
+
+        if (!$route) {
+            $route = method_exists($user, 'has_backend_access') && !$user->has_backend_access()
+                ? 'frontend.home'
+                : 'admin.home';
+        }
+
+        return $this->impersonationRouteUrl($route);
+    }
+
+    /**
+     * Resolve a route name to a URL, falling back to the site root.
+     */
+    protected function impersonationRouteUrl(?string $route): string
+    {
+        return $route && Route::has($route) ? route($route) : url('/');
     }
 
     protected function auditImpersonation(string $description, int $adminId, int $targetId): void

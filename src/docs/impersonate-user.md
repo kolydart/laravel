@@ -82,19 +82,50 @@ The package registers two POST routes automatically via `KolydartServiceProvider
 | POST | `admin/users/{user}/impersonate` | `admin.users.impersonate` |
 | POST | `admin/users/leave-impersonation` | `admin.users.leaveImpersonation` |
 
-Route prefix, name prefix, and middleware are configurable via `config/kolydart.php`:
+Route prefix, name prefix, middleware, and redirects are configurable via `config/kolydart.php`:
 
 ```php
 'impersonate' => [
     'admin_role_id' => 1,              // Role ID that counts as "admin"
     'session_key'   => 'impersonating_admin_id',
     'ttl_seconds'   => env('IMPERSONATE_TTL_SECONDS', 3600),
+    'redirect_to'      => null,                 // null => auto (see below)
+    'redirect_back_to' => 'admin.users.index',  // after leaving impersonation
     'routes' => [
-        'middleware' => ['web', 'auth', '2fa', 'backend'],
-        'prefix'     => 'admin',
-        'name'       => 'admin.',
+        'middleware'       => ['web', 'auth', '2fa', 'backend'],
+        'leave_middleware' => null,             // null => same as 'middleware'
+        'prefix'           => 'admin',
+        'name'             => 'admin.',
     ],
 ],
+```
+
+#### Landing page after impersonation starts
+
+`redirect_to` accepts a route name. When left `null`, the target is resolved automatically: users **without** backend access are sent to `frontend.home`, everyone else to `admin.home`. Unknown route names fall back to `/`.
+
+This matters because most impersonation targets are ordinary users: sending them to `admin.home` would hit the backend middleware and produce a 403 immediately after impersonation starts.
+
+#### Middleware for the leave route
+
+The "Leave" request is issued by the **impersonated** user, not by the admin. If the shared `middleware` stack contains `backend` (or any other admin-only gate), that user is denied and can never return to their admin session. Set `leave_middleware` to a stack they can pass:
+
+```php
+'routes' => [
+    'middleware'       => ['web', 'auth'],
+    'leave_middleware' => ['web', 'auth'],
+],
+```
+
+#### Blocking specific users
+
+If the user model defines a `canBeImpersonated(): bool` method, it is consulted before impersonation starts and a `false` return aborts with 403. Use it to exclude accounts that would break the session — e.g. unverified users in apps whose middleware logs them out:
+
+```php
+public function canBeImpersonated(): bool
+{
+    return (bool) $this->verified;
+}
 ```
 
 ### Security

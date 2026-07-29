@@ -46,11 +46,24 @@ class KolydartServiceProvider extends ServiceProvider
 
         // Register impersonate UI routes
         $routeConfig = config('kolydart.impersonate.routes', []);
-        \Illuminate\Support\Facades\Route::middleware($routeConfig['middleware'] ?? ['auth'])
-            ->prefix($routeConfig['prefix'] ?? 'admin')
-            ->name($routeConfig['name'] ?? 'admin.')
+        $middleware  = $routeConfig['middleware'] ?? ['auth'];
+        $prefix      = $routeConfig['prefix'] ?? 'admin';
+        $name        = $routeConfig['name'] ?? 'admin.';
+
+        \Illuminate\Support\Facades\Route::middleware($middleware)
+            ->prefix($prefix)
+            ->name($name)
             ->group(function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/impersonate.php');
+            });
+
+        // The leave route is requested by the impersonated user, who typically
+        // lacks backend access; it therefore accepts its own middleware stack.
+        \Illuminate\Support\Facades\Route::middleware($routeConfig['leave_middleware'] ?? $middleware)
+            ->prefix($prefix)
+            ->name($name)
+            ->group(function () {
+                $this->loadRoutesFrom(__DIR__.'/../routes/impersonate-leave.php');
             });
 
         // Load commands if running in console
