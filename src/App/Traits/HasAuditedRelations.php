@@ -5,8 +5,6 @@ namespace Kolydart\Laravel\App\Traits;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
-use Illuminate\Database\Eloquent\Relations\MorphToMany;
-use Illuminate\Support\Arr;
 use Kolydart\Laravel\App\Support\OrderedPivotSync;
 
 /**
