@@ -50,6 +50,20 @@ final class PgAuditLog extends PowerGridComponent
         return class_exists('App\Models\User') ? 'App\Models\User' : 'App\User';
     }
 
+    /**
+     * Optional defence-in-depth gate, off unless the consumer opts in via
+     * config('kolydart.audit_log.view_ability'). Called from datasource() rather
+     * than a lifecycle hook so it cannot collide with PowerGrid's own mount/boot.
+     */
+    protected function authorizeAuditLogAccess(): void
+    {
+        $ability = config('kolydart.audit_log.view_ability');
+
+        if ($ability) {
+            \Illuminate\Support\Facades\Gate::authorize($ability);
+        }
+    }
+
     /*
     |--------------------------------------------------------------------------
     |  Features Setup
@@ -101,6 +115,8 @@ final class PgAuditLog extends PowerGridComponent
     */
     public function datasource(): Builder
     {
+        $this->authorizeAuditLogAccess();
+
         $AuditLog = $this->auditLogModel();
         $query = $AuditLog::query()
             ->leftJoin('users', 'audit_logs.user_id', '=', 'users.id')
@@ -217,11 +233,14 @@ final class PgAuditLog extends PowerGridComponent
             ->add('subject_type', function($model){
                 return class_basename($model->subject_type);
             })
+            // PowerGrid renders field values as raw HTML (this is what makes the
+            // <a> tags above work), so every value derived from user input must be
+            // escaped here or it becomes stored XSS in the admin audit log.
             ->add('user_name', function($model){
                 if($model->user_id){
                     $User = $this->userModel();
                     $user = $User::find($model->user_id);
-                    return $user->name ?? $model->user_id;
+                    return e($user->name ?? $model->user_id);
                 }
                 return 'System';
             })
@@ -231,9 +250,9 @@ final class PgAuditLog extends PowerGridComponent
                     $properties = $properties->toArray();
                 }
                 if(is_array($properties)){
-                    return Str::limit(json_encode($properties), 50);
+                    return e(Str::limit(json_encode($properties), 50));
                 }
-                return Str::limit((string) $properties, 50);
+                return e(Str::limit((string) $properties, 50));
             })
             ->add('created_at_formatted', function($model){
                 return $model->created_at->format('Y-m-d H:i:s');

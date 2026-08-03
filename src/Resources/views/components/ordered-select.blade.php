@@ -55,8 +55,18 @@
     @if($multiple) multiple @endif
     @if($required) required @endif
     @if($multiple && $dragReorder) data-drag-reorder @endif
+    {{--
+        Attribute NAMES are filtered, not escaped: e() leaves spaces and '='
+        untouched, so a crafted key such as `onmouseover=alert(1) x` would break
+        out of the attribute position and inject a handler.
+
+        The leading @ and : keep Alpine/Livewire shorthands (@click, :class,
+        wire:model, x-on:click) working.
+    --}}
     @foreach($attributes as $attr => $value)
-        {{ $attr }}="{{ $value }}"
+        @if(preg_match('/^[A-Za-z_@:][A-Za-z0-9_@:.-]*$/', $attr))
+            {{ $attr }}="{{ $value }}"
+        @endif
     @endforeach
 >
     @if(!$multiple && !$required)

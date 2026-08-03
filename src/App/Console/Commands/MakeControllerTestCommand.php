@@ -56,10 +56,21 @@ class MakeControllerTestCommand extends Command
     {
         $name = $this->argument('name');
         $controllerName = Str::studly($name);
-        
+
         // Parse the controller path and name
         $parts = explode('/', $controllerName);
         $controllerBaseName = array_pop($parts);
+
+        // Str::studly() leaves dot segments intact, so an argument such as
+        // '../../../etc/cron.d/x' would escape the tests directory and have
+        // File::put() write there. Keep every segment to a plain identifier.
+        foreach (array_merge($parts, [$controllerBaseName]) as $segment) {
+            if (!preg_match('/^[A-Za-z0-9_]+$/', $segment)) {
+                $this->error("Invalid name segment [{$segment}]. Use letters, digits and underscores, separated by '/'.");
+
+                return 1;
+            }
+        }
         $className = $controllerBaseName . 'Test';
         $namespace = 'Tests\\Feature\\app\\Http\\Controllers';
         

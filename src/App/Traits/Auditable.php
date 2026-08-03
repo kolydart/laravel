@@ -37,8 +37,7 @@ use Spatie\MediaLibrary\MediaCollections\Models\Media;
  * 2026-06-02 (P4)
  * - Bundle $model->auditMetaExtras (set by HasMetaFields::saveWithMeta() in the
  *   consumer app) into the audit `properties` JSON so column + meta updates
- *   yield a single audit entry. See l_helmarc
- *   docs/roadmaps/data-objects-audit-integration.md §AU4.
+ *   yield a single audit entry.
  *
  * 2026-06-02
  * - Add defensive try/catch around "Data too long" fallback create: log
@@ -98,6 +97,10 @@ trait Auditable
             unset($changes['two_factor_expires_at']);
             unset($changes['updated_at']);
             unset($changes['remember_token']);
+            // Do not rely on the consumer model's $hidden alone: a model that
+            // omits it would write the bcrypt hash into audit_logs.properties,
+            // readable by every role holding audit_log_access.
+            unset($changes['password']);
 
             // Bundle meta diffs collected by HasMetaFields::saveWithMeta() so
             // column + meta changes land in one audit entry.

@@ -44,9 +44,16 @@ class KolydartServiceProvider extends ServiceProvider
             \Kolydart\Laravel\App\Listeners\ImpersonateUser::class
         );
 
+        $this->registerImpersonationTimeout();
+
         // Register impersonate UI routes
         $routeConfig = config('kolydart.impersonate.routes', []);
-        $middleware  = $routeConfig['middleware'] ?? ['auth'];
+
+        // The fallback must include 'web'. mergeConfigFrom() merges only the top
+        // level, so an app that published config/kolydart.php before the 'routes'
+        // key existed loses the whole sub-array and lands here — a POST route that
+        // grants a session swap must never run without VerifyCsrfToken.
+        $middleware  = $routeConfig['middleware'] ?? ['web', 'auth'];
         $prefix      = $routeConfig['prefix'] ?? 'admin';
         $name        = $routeConfig['name'] ?? 'admin.';
 
@@ -80,5 +87,42 @@ class KolydartServiceProvider extends ServiceProvider
         }
 
         // Other publishes...
+    }
+
+    /**
+     * Append EnforceImpersonationTimeout to the 'web' middleware group.
+     *
+     * Previously this was a manual step, documented as publishing the middleware
+     * and registering \App\Http\Middleware\EnforceImpersonationTimeout::class.
+     * That never worked: `vendor:publish --tag=middleware` copies the file
+     * verbatim, so the published copy still declares the package namespace and
+     * the App\ class the Kernel referenced did not exist. The practical result
+     * was that `ttl_seconds` was documented but never enforced.
+     *
+     * Registering it here makes the TTL effective out of the box. The middleware
+     * is inert for every request that carries no impersonation session key, so
+     * apps that do not use impersonation are unaffected.
+     *
+     * Set `kolydart.impersonate.auto_register_timeout` to false to opt out and
+     * register it manually instead.
+     */
+    protected function registerImpersonationTimeout(): void
+    {
+        if (! config('kolydart.impersonate.auto_register_timeout', true)) {
+            return;
+        }
+
+        $kernel = $this->app->make(\Illuminate\Contracts\Http\Kernel::class);
+
+        // appendMiddlewareToGroup() is a concrete-Kernel API; a custom Kernel
+        // implementing only the contract must register the middleware itself.
+        if (! method_exists($kernel, 'appendMiddlewareToGroup')) {
+            return;
+        }
+
+        $kernel->appendMiddlewareToGroup(
+            'web',
+            \Kolydart\Laravel\App\Http\Middleware\EnforceImpersonationTimeout::class
+        );
     }
 }

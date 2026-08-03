@@ -11,7 +11,7 @@ use ReflectionMethod;
 
 /**
  * Structural tests για το HasAuditedRelations trait. Δεν τρέχουν DB
- * operations — η ολοκληρωμένη integration καλύπτεται στο l_helmarc
+ * operations — η ολοκληρωμένη integration καλύπτεται στην εφαρμογή-καταναλωτή
  * (tests/Feature/app/Livewire/pgAuditLogsTest.php).
  */
 class HasAuditedRelationsTest extends TestCase

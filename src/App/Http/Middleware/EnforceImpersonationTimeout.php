@@ -5,6 +5,7 @@ namespace Kolydart\Laravel\App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 class EnforceImpersonationTimeout
 {
@@ -20,7 +21,12 @@ class EnforceImpersonationTimeout
                 session()->forget($sessionKey);
                 Auth::logout();
 
-                return redirect()->route('login')->with('message', 'Impersonation expired');
+                // This middleware runs on the whole 'web' group, so it must not
+                // assume a route named 'login' exists — falling back to '/' keeps
+                // an app without one from turning an expiry into a 500.
+                return Route::has('login')
+                    ? redirect()->route('login')->with('message', 'Impersonation expired')
+                    : redirect('/')->with('message', 'Impersonation expired');
             }
         }
 

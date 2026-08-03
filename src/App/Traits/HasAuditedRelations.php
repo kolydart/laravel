@@ -29,7 +29,7 @@ use Kolydart\Laravel\App\Support\OrderedPivotSync;
  * Δεν αντικαθιστά το `Auditable` trait — εστιάζει αποκλειστικά σε
  * relation operations. Μπορεί να συνυπάρχει με αυτό.
  *
- * @see kolydart-laravel/README ή l_helmarc roadmap §AU5 για ολοκληρωμένο spec.
+ * @see README.md → Audited Relations για ολοκληρωμένο spec.
  *
  * @changelog
  * 2026-06-02 (AU5)

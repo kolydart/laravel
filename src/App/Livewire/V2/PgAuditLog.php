@@ -8,7 +8,6 @@ use PowerComponents\LivewirePowerGrid\Rules\{Rule, RuleActions};
 use PowerComponents\LivewirePowerGrid\Traits\ActionButton;
 use PowerComponents\LivewirePowerGrid\{Button, Column, Exportable, Footer, Header, PowerGrid, PowerGridComponent, PowerGridEloquent};
 use Spatie\MediaLibrary\MediaCollections\Models\Media;
-use gateweb\common\Presenter;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Str;
 
@@ -31,6 +30,20 @@ final class PgAuditLog extends PowerGridComponent
     protected function userModel(): string
     {
         return class_exists('App\Models\User') ? 'App\Models\User' : 'App\User';
+    }
+
+    /**
+     * Optional defence-in-depth gate, off unless the consumer opts in via
+     * config('kolydart.audit_log.view_ability'). Called from datasource() rather
+     * than a lifecycle hook so it cannot collide with PowerGrid's own mount/boot.
+     */
+    protected function authorizeAuditLogAccess(): void
+    {
+        $ability = config('kolydart.audit_log.view_ability');
+
+        if ($ability) {
+            \Illuminate\Support\Facades\Gate::authorize($ability);
+        }
     }
 
     /*
@@ -87,6 +100,8 @@ final class PgAuditLog extends PowerGridComponent
     */
     public function datasource(): Builder
     {
+        $this->authorizeAuditLogAccess();
+
         $AuditLog = $this->auditLogModel();
         $query = $AuditLog::query()
             ->leftJoin('users', 'audit_logs.user_id', '=', 'users.id')
@@ -182,8 +197,19 @@ final class PgAuditLog extends PowerGridComponent
 
                     }
 
+                    $mediaRoute = 'admin.'.str(str($media->model_type)->explode('\\')->last())->kebab()->plural().'.show';
+
+                    // Guard the route lookup: subject_type/model_type come from the
+                    // database, so an unroutable value must degrade to a plain id
+                    // rather than throw.
+                    if(!Route::has($mediaRoute)){
+
+                        return $model->subject_id;
+
+                    }
+
                     return '<a href="'
-                        .route('admin.'.str(str($media->model_type)->explode('\\')->last())->kebab()->plural().'.show',$media->model_id)
+                        .route($mediaRoute,$media->model_id)
                     .'" target="_blank">'.$model->subject_id.'</a>';
 
                 }elseif(Route::has('admin.'.str(str($model->subject_type)->explode('\\')->last())->kebab()->plural().'.show')){
@@ -202,9 +228,23 @@ final class PgAuditLog extends PowerGridComponent
 
             ->add('subject_type', fn($model) => str($model->subject_type)->explode('\\')->last() ?? '' )
             ->add('user_id', fn ($model) => $model->user_id)
-            ->add('user_name', fn($model) => $model->user->name ?? '' )
+            // PowerGrid renders field values as raw HTML (this is what makes the
+            // <a> tags above work), so every value derived from user input must be
+            // escaped here or it becomes stored XSS in the admin audit log.
+            ->add('user_name', fn($model) => e($model->user->name ?? '') )
             ->add('properties')
-            ->add('properties_excerpt', fn ($model) => Presenter::left(rawurldecode(http_build_query($model->properties->toArray())),30))
+            ->add('properties_excerpt', function ($model) {
+                $properties = $model->properties;
+
+                if ($properties instanceof \Illuminate\Contracts\Support\Arrayable) {
+                    $properties = $properties->toArray();
+                }
+
+                // Deliberately NOT rawurldecode(http_build_query(…)): that pair
+                // encodes and then immediately decodes, handing back the raw
+                // "<script>" it just neutralised.
+                return e(Str::limit(is_array($properties) ? json_encode($properties) : (string) $properties, 30));
+            })
             ->add('host')
             ->add('created_at_formatted', fn ($model) => Carbon::parse($model->created_at)->format('d/m/Y H:i:s'))
             ->add('updated_at_formatted', fn ($model) => Carbon::parse($model->updated_at)->format('d/m/Y H:i:s'));

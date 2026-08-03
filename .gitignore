@@ -1,3 +1,11 @@
 /vendor
 /sandbox
 composer.lock
+
+# Local tooling and machine-specific files. This repository is public — these
+# must never be committed. Do not rely on a global gitignore for them.
+sftp-config.json
+*.sublime-project
+*.sublime-workspace
+.phpunit.result.cache
+.DS_Store

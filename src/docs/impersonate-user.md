@@ -89,6 +89,7 @@ Route prefix, name prefix, middleware, and redirects are configurable via `confi
     'admin_role_id' => 1,              // Role ID that counts as "admin"
     'session_key'   => 'impersonating_admin_id',
     'ttl_seconds'   => env('IMPERSONATE_TTL_SECONDS', 3600),
+    'auto_register_timeout' => true,   // append the TTL middleware to 'web'
     'redirect_to'      => null,                 // null => auto (see below)
     'redirect_back_to' => 'admin.users.index',  // after leaving impersonation
     'routes' => [
@@ -99,6 +100,8 @@ Route prefix, name prefix, middleware, and redirects are configurable via `confi
     ],
 ],
 ```
+
+> **If you publish `config/kolydart.php`, publish it whole.** `mergeConfigFrom()` merges only the top level, so a published file containing an `impersonate` key replaces the package's entire sub-array — any key you omit is missing, not defaulted. In particular, omitting `routes` drops the middleware stack; the provider then falls back to `['web', 'auth']`, which keeps CSRF protection but loses `2fa` and `backend`. After upgrading the package, diff your published config against `src/config/kolydart.php`.
 
 #### Landing page after impersonation starts
 
@@ -135,35 +138,39 @@ public function canBeImpersonated(): bool
 - **No admin→admin escalation**: impersonating a user who is also an admin is blocked (HTTP 403).
 - **No self-impersonation**: `abort_if($user->id === auth()->id(), 403)`.
 - **Revoked-admin guard**: `leaveImpersonation` re-checks the admin's role before restoring the session — if the role was removed, the session is destroyed and the user is redirected to login.
-- **TTL enforcement**: sessions expire after `ttl_seconds` (default: 3600 s). Register `EnforceImpersonationTimeout` in your HTTP kernel to enforce this on every request (see below).
+- **TTL enforcement**: sessions expire after `ttl_seconds` (default: 3600 s). `EnforceImpersonationTimeout` is appended to the `web` middleware group automatically (see below).
 - **Audit log**: every start/end event is written to `AuditLog` (if the model exists in `App\Models\AuditLog` or `App\AuditLog`).
 - `leaveImpersonation` aborts with 403 if no session key exists (prevents direct URL access).
 - Both routes require the configured middleware stack (default: `web`, `auth`, `2fa`, `backend`).
 
-#### Registering the Timeout Middleware
+#### Timeout Middleware
 
-Publish the middleware:
-
-```bash
-php artisan vendor:publish --tag=middleware
-```
-
-Then register it in `app/Http/Kernel.php` inside the `web` middleware group:
-
-```php
-protected $middlewareGroups = [
-    'web' => [
-        // ... existing middleware
-        \App\Http\Middleware\EnforceImpersonationTimeout::class,
-    ],
-];
-```
+`KolydartServiceProvider` appends `EnforceImpersonationTimeout` to the `web` middleware group on boot. No manual registration is needed. The middleware returns immediately for any request without an impersonation session key, so apps that never impersonate are unaffected.
 
 Configure the TTL in your `.env`:
 
 ```env
 IMPERSONATE_TTL_SECONDS=3600
 ```
+
+To register it yourself instead, opt out in `config/kolydart.php` and add the **package** class to your kernel:
+
+```php
+'impersonate' => [
+    'auto_register_timeout' => false,
+],
+```
+
+```php
+protected $middlewareGroups = [
+    'web' => [
+        // ... existing middleware
+        \Kolydart\Laravel\App\Http\Middleware\EnforceImpersonationTimeout::class,
+    ],
+];
+```
+
+> **Do not use `vendor:publish --tag=middleware` for this.** That tag copies the middleware files verbatim, so the published copies still declare `namespace Kolydart\Laravel\App\Http\Middleware`. A kernel entry for `\App\Http\Middleware\EnforceImpersonationTimeout::class` therefore refers to a class that does not exist. Earlier versions of this document recommended exactly that, which meant `ttl_seconds` was documented but never enforced — if you followed those instructions, remove the `\App\Http\Middleware\` entry from your kernel.
 
 ---
 

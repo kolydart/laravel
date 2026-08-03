@@ -172,6 +172,11 @@ HELP;
 
             File::put($outputPath, $mermaidERD);
 
+            // Explicit mode: this command is commonly run from a deploy script as
+            // root, and a umask-derived 0600/0644 would leave the file unwritable
+            // by the www-data run that follows.
+            @chmod($outputPath, 0664);
+
             $this->info("ERD generated successfully: {$outputPath}");
             $this->info("Tables processed: " . count($schema['tables']));
 

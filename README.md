@@ -11,6 +11,7 @@ A collection of Laravel helper classes including ordered pivot relationships fun
 ## Table of Contents
 
 - [Installation](#installation)
+- [Security](#security)
 - [Audited Relations](#audited-relations)
 - [Ordered Pivot Relationships](#ordered-pivot-relationships)
   - [Quick Start](#quick-start)
@@ -33,6 +34,47 @@ composer require kolydart/laravel
 ```
 
 The service provider will be automatically registered via Laravel's package auto-discovery.
+
+## Security
+
+Notes for consumer applications. See the [changelog](CHANGELOG.md) for the fixes behind them.
+
+### The audit log grid renders escaped values — keep it that way
+
+PowerGrid renders field closure return values as **raw HTML** (that is what lets `PgAuditLog` return `<a href="…">` links). Audit `properties` and user names are attacker-controlled: a user who can edit any audited text field — their own profile name is enough — can store markup that executes in the browser of whoever opens the audit log.
+
+Every such value in `PgAuditLog` is therefore passed through `e()`. If you subclass the component or add your own fields, escape anything that originates from the database:
+
+```php
+->add('my_field', fn ($model) => e($model->some_user_supplied_value))
+```
+
+### Restricting who can read the audit log
+
+`PgAuditLog` performs no authorization of its own. Rendered without a `:model` parameter it exposes the whole `audit_logs` table — who did what, to which record, from which IP. Authorization is normally handled by the route that renders it. For defence in depth, name a Gate ability:
+
+```php
+// config/kolydart.php
+'audit_log' => [
+    'view_ability' => 'audit_log_access',
+],
+```
+
+The check runs in `datasource()`. It is `null` (no check) by default, so existing installations are unaffected until they opt in — set it only once the ability actually exists, or every audit grid will 403.
+
+### `Auditable` and sensitive columns
+
+`Auditable` writes changed attributes into `audit_logs.properties`, which is readable by every role holding audit-log access. It drops `password`, `remember_token`, `two_factor_code` and `two_factor_expires_at` explicitly; everything else is filtered only by your model's `$hidden`.
+
+If a model carries secrets under other names — API tokens, recovery codes, national identifiers — add them to `$hidden` on that model.
+
+### `backend` middleware denies by default
+
+`BackendAccess` aborts with 403 for guests and for user models that do not implement `has_backend_access()`. Before this was the case it allowed both through, so a route group protected by `backend` alone was open. It is still correct to place `auth` ahead of it; the middleware no longer depends on you doing so.
+
+### Publishing `config/kolydart.php`
+
+`mergeConfigFrom()` merges only the top level. A published config containing an `impersonate` key replaces that whole sub-array, so any key you omit goes missing rather than falling back to the package default. Diff your published copy against `src/config/kolydart.php` after upgrading.
 
 ## Audited Relations
 

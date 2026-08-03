@@ -61,6 +61,17 @@ class MakeOrderedPivotMigration extends Command
         $orderColumn = $this->option('order-column');
         $afterColumn = $this->option('after');
 
+        // These land both in the migration filename and, unquoted, inside the
+        // generated PHP. A value containing a quote would close the string
+        // literal and inject arbitrary code into the migration that runs next.
+        foreach (['table' => $table, 'order-column' => $orderColumn, 'after' => $afterColumn] as $label => $value) {
+            if ($value !== null && $value !== '' && !preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $value)) {
+                $this->error("Invalid {$label} [{$value}]. Use a plain identifier: letters, digits and underscores.");
+
+                return 1;
+            }
+        }
+
         $migrationName = 'add_' . $orderColumn . '_to_' . $table . '_table';
         $className = Str::studly($migrationName);
 
