@@ -6,6 +6,8 @@ A collection of Laravel helper classes including ordered pivot relationships fun
 
 > Additional documentation is available in the [`src/docs/`](src/docs/) folder.
 
+> ⚠️ **This repository is public.** Everything committed here — code, documentation, tests, commit messages — is world readable and permanently recorded in the git history, where a later commit cannot retract it. Contributions must therefore contain **no** hostnames or server names, internal domains or IP addresses, filesystem paths from real deployments, database or application names, client or project names, e-mail addresses, credentials, or references to private repositories and internal documents. Use neutral placeholders instead: `example.com`, `myapp`, `<host>`, `/path/to/app`. Anything meaningful to only one organisation belongs in that organisation's private repository; what is documented here is the general mechanism.
+
 ## Table of Contents
 
 - [Installation](#installation)
