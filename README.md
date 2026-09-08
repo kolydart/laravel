@@ -20,6 +20,7 @@ A collection of Laravel helper classes including ordered pivot relationships fun
   - [Usage Examples](#usage-examples)
   - [API Reference](#api-reference)
   - [Migration from Manual Implementation](#migration-from-manual-implementation)
+- [Private Media](#private-media)
 - [Additional Components](#additional-components)
 - [Testing Helpers](#testing-helpers)
   - [`InteractsWithDatatables`](#interactswithdatatables)
@@ -727,6 +728,32 @@ $('#users').on('select2:select', function (e) {
 />
 ```
 
+
+## Private Media
+
+`spatie/laravel-medialibrary` writes to the `public` disk by default, which is under the document root: those files answer a URL without PHP running, so no gate is ever consulted. Moving a collection to a private disk is only half the job — the other half is a route that serves it back with an authorization check in front, and that is what this component is.
+
+Enable it in `config/kolydart.php`:
+
+```php
+'media' => [
+    'enabled' => true,
+    'routes'  => ['middleware' => ['web', 'auth', 'backend'], 'prefix' => 'admin', 'name' => 'admin.'],
+    'public_collections' => ['ck-media', \App\Listing::class.'@image'],
+    'gates' => [
+        \App\Customer::class => 'customer_show',
+        \App\Expense::class  => 'expense_show',
+    ],
+],
+```
+
+Then address files with `@mediaUrl($media)` / `@mediaUrl($media, 'thumb')` instead of `$media->getUrl()`. Both lookup tables take the same two key forms: `gates` is consulted as `Model@collection`, then `Model`, then `*`, and a model with no mapping is **denied**; `public_collections` accepts a bare collection name (every model) or `Model@collection` (one model), which is what a mixed decision needs when the same collection name is display material on one model and not on another. A listed collection whose files have since moved to a non-web-served disk falls back to the protected route with a logged warning, rather than producing a dead `/storage` link.
+
+The gate abilities are checked **without the owning record**, so they express a class-level permission. If the application's own listings are scoped — multi-tenant, team-owned, granted per record — set `'access' => \App\Services\MyMediaAccess::class` to a class implementing `\Kolydart\Laravel\App\Support\MediaAccessContract` (one method, `allows(Media $media): bool`) and scope against `$media->model` there.
+
+The route serves **local disks only**: it reads the file off the filesystem, which `Media::getPath()` can address only for the `local` driver. Media on S3 is protected by that bucket's ACL and a temporary URL, not by this route.
+
+Full procedure — including the order the steps must be taken in, why the disk must move last, and the filesystem-permission trap that makes every moved file 404 — is in [`src/docs/private-media.md`](src/docs/private-media.md).
 
 ## Additional Components
 

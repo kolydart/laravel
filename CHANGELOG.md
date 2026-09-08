@@ -59,6 +59,32 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ### Added
 
+- **Private media** — `MediaController`, `MediaAccessContract` and its default
+  implementation `MediaAccess`, `MediaUrl`, the `@mediaUrl` Blade directive and
+  the `{prefix}.media` / `.media.conversion` routes. The routes sit behind
+  `kolydart.media.enabled` (off by default) and are skipped entirely when
+  `spatie/laravel-medialibrary` is absent; the directive is registered
+  unconditionally, because an unknown Blade directive renders as literal text
+  rather than failing, and the documented migration order changes call sites
+  before the disk moves. The media library writes to the `public` disk by
+  default, under the document root, where a file answers its URL without PHP
+  running and no gate is ever consulted; this is the route that serves such a
+  collection back with an authorization check in front. Access is a config
+  lookup table keyed `Model@collection`, `Model`, `*`, and a model nobody mapped
+  is **denied** — a collection added later is private until someone says
+  otherwise. The abilities are checked without the owning record, so they are
+  class-level permissions; an application with scoped listings expresses that by
+  naming its own `MediaAccessContract` in `kolydart.media.access`.
+  `public_collections` takes the same key forms, so one model's `image` can stay
+  on the web-served disk while the same collection name elsewhere does not — but
+  the disk has the last word, and a listed collection whose files have moved
+  falls back to the protected route with a logged warning instead of emitting a
+  dead `/storage` link. Conversions get their own protected route asking the
+  same question as the original, because a 120px preview of an identity document
+  is still the document. The route serves **local disks only**: it reads files
+  off the filesystem, which `Media::getPath()` can address only for the `local`
+  driver. Procedure, and the four ways this goes wrong in practice, in
+  [`src/docs/private-media.md`](src/docs/private-media.md).
 - `kolydart.audit_log.view_ability` — optional Gate ability checked in
   `PgAuditLog::datasource()`. `null` by default (no check), so existing
   installations are unaffected. Set it for defence in depth; the component
@@ -96,6 +122,13 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ### Changed
 
+- **Minimum PHP is now 8.4** (was `>=7.4`). The declared floor had long been
+  fiction: `minimum-stability: dev` resolves this package's dependency tree to
+  the current Laravel and Symfony releases, and Symfony 8.1 requires PHP 8.4.1 —
+  `symfony/console` alone is a parse error on anything older. Meanwhile tooling
+  that picks an interpreter from the `require` block was selecting PHP 7.4, on
+  which the test suite could not start at all. The floor now states what the
+  package is actually built and tested against.
 - `HasOrderedPivot::syncWithOrder()` / `getOrderedIds()`,
   `HandlesOrderedPivot::syncWithOrder()` / `getOrderedIds()` and
   `HasAuditedRelations::auditedSyncWithOrder()` now compute their diff through

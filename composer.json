@@ -19,7 +19,7 @@
         }
     ],
     "require": {
-        "php": ">=7.4"
+        "php": ">=8.4"
     },
     "require-dev": {
         "phpunit/phpunit": "^10.0|^11.0|^12.0",
@@ -29,10 +29,12 @@
         "mockery/mockery": "^1.6",
         "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
         "illuminate/events": "^10.0|^11.0|^12.0|^13.0",
-        "laravel/framework": "^10.0|^11.0|^12.0|^13.0"
+        "laravel/framework": "^10.0|^11.0|^12.0|^13.0",
+        "spatie/laravel-medialibrary": "^11.0"
     },
     "suggest": {
-        "doctrine/dbal": "Required to generate ERDs."
+        "doctrine/dbal": "Required to generate ERDs.",
+        "spatie/laravel-medialibrary": "Required by the protected media routes (kolydart.media)."
     },
     "minimum-stability": "dev",
     "prefer-stable": true,

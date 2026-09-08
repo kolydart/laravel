@@ -46,6 +46,8 @@ class KolydartServiceProvider extends ServiceProvider
 
         $this->registerImpersonationTimeout();
 
+        $this->registerMediaRoutes();
+
         // Register impersonate UI routes
         $routeConfig = config('kolydart.impersonate.routes', []);
 
@@ -87,6 +89,59 @@ class KolydartServiceProvider extends ServiceProvider
         }
 
         // Other publishes...
+    }
+
+    /**
+     * Register the protected media routes and the @mediaUrl directive.
+     *
+     * The routes are opt-in via `kolydart.media.enabled` and are skipped when
+     * spatie/laravel-medialibrary is absent — the package only suggests it. The
+     * directive is not gated on either, deliberately: see below.
+     */
+    protected function registerMediaRoutes(): void
+    {
+        // Blade call sites must not reach for $media->getUrl(): a private disk
+        // has no `url` key and the local driver answers /storage/{path} anyway,
+        // so the link is dead rather than protected and nothing fails loudly.
+        //
+        // Registered unconditionally, because an unknown directive is not an
+        // error in Blade — it renders as the literal text "@mediaUrl($media)" in
+        // the page, silently. The documented migration order has the call sites
+        // change before the disk does, so a Blade using @mediaUrl while
+        // `enabled` is still false is an expected intermediate state, and it
+        // must fail somewhere a developer will see. MediaUrl::url() answers
+        // public collections without touching a route at all; for the rest it
+        // throws RouteNotFoundException, which is the point.
+        \Illuminate\Support\Facades\Blade::directive('mediaUrl', function ($expression) {
+            return "<?php echo e(\\Kolydart\\Laravel\\App\\Support\\MediaUrl::url({$expression})); ?>";
+        });
+
+        if (! config('kolydart.media.enabled', false)) {
+            return;
+        }
+
+        if (! class_exists(\Spatie\MediaLibrary\MediaCollections\Models\Media::class)) {
+            return;
+        }
+
+        // The contract is the binding key and the concrete class the target, so
+        // a resolver only has to implement one method — it does not have to
+        // extend the default one, which is what the config documents.
+        // `?:` rather than a config() default: Arr::get returns an explicitly
+        // null value as-is, and bind() with a null target is a TypeError.
+        $this->app->bind(
+            \Kolydart\Laravel\App\Support\MediaAccessContract::class,
+            config('kolydart.media.access') ?: \Kolydart\Laravel\App\Support\MediaAccess::class
+        );
+
+        $routeConfig = config('kolydart.media.routes', []);
+
+        \Illuminate\Support\Facades\Route::middleware($routeConfig['middleware'] ?? ['web', 'auth'])
+            ->prefix($routeConfig['prefix'] ?? 'admin')
+            ->name($routeConfig['name'] ?? 'admin.')
+            ->group(function () {
+                $this->loadRoutesFrom(__DIR__.'/../routes/media.php');
+            });
     }
 
     /**
