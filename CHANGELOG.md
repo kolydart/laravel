@@ -59,6 +59,17 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ### Added
 
+- **Livewire upload probes answer 400.** `LivewireUploadProbe` maps
+  `MissingFileUploadsTraitException` to `BadRequestHttpException`, registered by
+  `KolydartServiceProvider` once the exception handler resolves. Only a crafted
+  request triggers it (an upload call on a component without
+  `WithFileUploads`), yet it surfaced as a 500 and was reported to Sentry. The
+  mapped exception answers 400 with a fixed `Bad request.` message and is not
+  reported. While `app.debug` is on the mapping stands aside, so a forgotten
+  trait on a real file input still shows Livewire's message in development.
+  Both class locations are covered, Livewire 2 and Livewire 3/4; without
+  Livewire nothing is registered. Opt out with
+  `kolydart.livewire.upload_probe_as_bad_request = false`.
 - **Private media** — `MediaController`, `MediaAccessContract` and its default
   implementation `MediaAccess`, `MediaUrl`, the `@mediaUrl` Blade directive and
   the `{prefix}.media` / `.media.conversion` routes. The routes sit behind

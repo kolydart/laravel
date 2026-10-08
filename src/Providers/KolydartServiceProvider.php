@@ -46,6 +46,8 @@ class KolydartServiceProvider extends ServiceProvider
 
         $this->registerImpersonationTimeout();
 
+        $this->registerLivewireUploadProbe();
+
         $this->registerMediaRoutes();
 
         // Register impersonate UI routes
@@ -142,6 +144,30 @@ class KolydartServiceProvider extends ServiceProvider
             ->group(function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/media.php');
             });
+    }
+
+    /**
+     * Answer a Livewire upload probe with 400 instead of 500.
+     *
+     * After resolving rather than now: the handler may not be built yet, and
+     * the application's own Handler::register() runs in its constructor, so
+     * the mapping lands after it either way. The map is keyed by class, so a
+     * mapping the application made for the same exception is replaced; opt
+     * out to keep it. Inert without Livewire. See LivewireUploadProbe for why
+     * the exception is a probe and not a bug.
+     *
+     * Set `kolydart.livewire.upload_probe_as_bad_request` to false to opt out.
+     */
+    protected function registerLivewireUploadProbe(): void
+    {
+        if (! config('kolydart.livewire.upload_probe_as_bad_request', true)) {
+            return;
+        }
+
+        $this->callAfterResolving(
+            \Illuminate\Contracts\Debug\ExceptionHandler::class,
+            fn ($handler) => \Kolydart\Laravel\App\Support\LivewireUploadProbe::map($handler)
+        );
     }
 
     /**

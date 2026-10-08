@@ -73,6 +73,18 @@ If a model carries secrets under other names — API tokens, recovery codes, nat
 
 `BackendAccess` aborts with 403 for guests and for user models that do not implement `has_backend_access()`. Before this was the case it allowed both through, so a route group protected by `backend` alone was open. It is still correct to place `auth` ahead of it; the middleware no longer depends on you doing so.
 
+### Livewire upload probes answer 400
+
+Scanners take a component snapshot from any public page and post a file upload call against it to the Livewire update endpoint. On a component without `WithFileUploads`, Livewire refuses with `MissingFileUploadsTraitException` before anything runs, which left unmapped surfaces as a 500 and lands in Sentry as an application error.
+
+`KolydartServiceProvider` maps it to `BadRequestHttpException`: the probe answers 400 with the framework's fixed message `Bad request.` and is not reported. It covers Livewire 2 (`Livewire\Exceptions\…`) and 3/4 (`Livewire\Features\SupportFileUploads\…`), and does nothing without Livewire. Opt out with `kolydart.livewire.upload_probe_as_bad_request = false`; the opt-out is also how to keep a mapping of your own for the same exception, which the package's would otherwise replace.
+
+The same exception is what a real file input produces on a component that forgot `WithFileUploads`. While `app.debug` is on the mapping stands aside, so in development you still get Livewire's message and the trace. In production that bug shows only as uploads answering 400 with nothing in Sentry: if users report a broken upload, check the component for the trait first.
+
+"Not reported" holds for reporting that runs through the handler's `report()` chain, which is how `Integration::handles($exceptions)` and `reportable()` callbacks wire Sentry. A `Handler::report()` override that calls `app('sentry')->captureException()` before `parent::report()` sees the exception unmapped and still sends it.
+
+A future Livewire that moves the class again turns the mapping into a silent no-op, so keep a probe test in the application: build a real snapshot with `Livewire::test(SomeComponent::class)->snapshot`, post an upload call for it to `Livewire::getUpdateUri()` over HTTP, and assert 400. `Livewire::test()->call()` will not do, since it bypasses the exception handler.
+
 ### Publishing `config/kolydart.php`
 
 `mergeConfigFrom()` merges only the top level. A published config containing an `impersonate` key replaces that whole sub-array, so any key you omit goes missing rather than falling back to the package default. Diff your published copy against `src/config/kolydart.php` after upgrading.

@@ -88,6 +88,17 @@ return [
         'access' => \Kolydart\Laravel\App\Support\MediaAccess::class,
     ],
 
+    'livewire' => [
+        /**
+         * Answer an upload call on a component without WithFileUploads with
+         * 400 instead of 500, and keep it out of the error report. In
+         * production that is almost always a crafted request; with app.debug
+         * on the original exception is left alone. Inert without Livewire.
+         * See \Kolydart\Laravel\App\Support\LivewireUploadProbe.
+         */
+        'upload_probe_as_bad_request' => true,
+    ],
+
     'impersonate' => [
         'enabled'        => env('IMPERSONATE_ENABLED', false),
         'admin_role_id'  => 1,
