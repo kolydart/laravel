@@ -59,6 +59,7 @@ This project follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) lo
 
 ### Added
 
+- **In-app guide** (`kolydart.guide`, off by default). Markdown pages with YAML front matter, read from `docs/guide/` on every request and shown inside the application's layout: index with accent-insensitive search, one page per `<slug>.md`, images served behind the same gate (and hidden with their page), headings with GitHub-style ids so `#fragment` links written against an editor preview work in the application. Extracted from an application's guide, without its application-specific parts. Needs `symfony/yaml`, which the package only suggests; enabling the guide without it fails at boot with a message naming the package. Its UI strings are the first loaded through `loadTranslationsFrom()`, from `src/Resources/translations/{el,en}` (namespace `kolydart::`); the older `src/Resources/Lang/{El,En}/Gw.php` classes are not translation files and stay as they are. See `src/docs/guide.md`.
 - **Livewire upload probes answer 400.** `LivewireUploadProbe` maps
   `MissingFileUploadsTraitException` to `BadRequestHttpException`, registered by
   `KolydartServiceProvider` once the exception handler resolves. Only a crafted

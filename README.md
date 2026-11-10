@@ -21,6 +21,7 @@ A collection of Laravel helper classes including ordered pivot relationships fun
   - [API Reference](#api-reference)
   - [Migration from Manual Implementation](#migration-from-manual-implementation)
 - [Private Media](#private-media)
+- [In-app Guide](#in-app-guide)
 - [Additional Components](#additional-components)
 - [Testing Helpers](#testing-helpers)
   - [`InteractsWithDatatables`](#interactswithdatatables)
@@ -766,6 +767,20 @@ The gate abilities are checked **without the owning record**, so they express a 
 The route serves **local disks only**: it reads the file off the filesystem, which `Media::getPath()` can address only for the `local` driver. Media on S3 is protected by that bucket's ACL and a temporary URL, not by this route.
 
 Full procedure — including the order the steps must be taken in, why the disk must move last, and the filesystem-permission trap that makes every moved file 404 — is in [`src/docs/private-media.md`](src/docs/private-media.md).
+
+## In-app Guide
+
+User documentation kept in the repository as Markdown files with YAML front matter (`docs/guide/<slug>.md`) and shown inside the application at `/admin/guide/<slug>`, behind its own gate, with search and images served through the same authorization. No build step, no table. Off by default:
+
+```php
+'guide' => [
+    'enabled' => true,
+    'gate'    => 'guide_access',
+    // path, admin_gate, routes, layout, sections: see src/docs/guide.md
+],
+```
+
+Because `mergeConfigFrom()` merges only the top level, an application with a published `config/kolydart.php` must repeat every key of the block. Page contract, setup and tests: [`src/docs/guide.md`](src/docs/guide.md).
 
 ## Additional Components
 

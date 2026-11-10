@@ -88,6 +88,50 @@ return [
         'access' => \Kolydart\Laravel\App\Support\MediaAccess::class,
     ],
 
+    /**
+     * The in-app guide: Markdown pages with YAML front matter, read from a
+     * folder in the repository on every request (no build step, no table) and
+     * shown inside the application's own layout, behind its own ACL.
+     *
+     * See src/docs/guide.md for the page contract and the setup.
+     */
+    'guide' => [
+        /** Register the guide routes. Off by default. */
+        'enabled' => false,
+
+        /** Folder of `<slug>.md` pages. null => base_path('docs/guide'). */
+        'path' => null,
+
+        /**
+         * Gate ability required for every guide route (index, page, image).
+         * null => any user who passes the route middleware.
+         */
+        'gate' => null,
+
+        /**
+         * Gate ability that also reveals pages marked `visibility: admin`.
+         * null => those pages are shown to nobody.
+         */
+        'admin_gate' => null,
+
+        'routes' => [
+            'middleware' => ['web', 'auth'],
+            'prefix'     => 'admin',
+            'name'       => 'admin.',
+        ],
+
+        /** Blade layout the pages extend; it must yield 'content' and 'styles'. */
+        'layout' => 'layouts.admin',
+
+        /**
+         * Section key (the `section:` of a page) => heading, in menu order.
+         * A page in a section not listed here sorts last, under its raw key.
+         */
+        'sections' => [
+            'general' => 'General',
+        ],
+    ],
+
     'livewire' => [
         /**
          * Answer an upload call on a component without WithFileUploads with

@@ -50,6 +50,8 @@ class KolydartServiceProvider extends ServiceProvider
 
         $this->registerMediaRoutes();
 
+        $this->registerGuide();
+
         // Register impersonate UI routes
         $routeConfig = config('kolydart.impersonate.routes', []);
 
@@ -143,6 +145,58 @@ class KolydartServiceProvider extends ServiceProvider
             ->name($routeConfig['name'] ?? 'admin.')
             ->group(function () {
                 $this->loadRoutesFrom(__DIR__.'/../routes/media.php');
+            });
+    }
+
+    /**
+     * Register the in-app guide (src/docs/guide.md), opt-in via
+     * `kolydart.guide.enabled`.
+     *
+     * The repository is scoped, not a singleton: it memoises the pages it has
+     * read, and a long-lived worker must see a page edited after it started.
+     *
+     * symfony/yaml and league/commonmark are suggested, not required, so that
+     * an application without the guide does not install them. Unlike the media
+     * routes, an enabled guide without them throws instead of skipping: the
+     * menu entry calls route('…guide.index'), so a silently missing route would
+     * fail on every page anyway, with a message that names neither package.
+     */
+    protected function registerGuide(): void
+    {
+        $this->loadTranslationsFrom(__DIR__.'/../Resources/translations', 'kolydart');
+
+        $this->app->scoped(
+            \Kolydart\Laravel\App\Support\Guide\GuideRepository::class,
+            fn () => new \Kolydart\Laravel\App\Support\Guide\GuideRepository(
+                config('kolydart.guide.path') ?: base_path('docs/guide'),
+                array_keys((array) config('kolydart.guide.sections', []))
+            )
+        );
+
+        if (! config('kolydart.guide.enabled', false)) {
+            return;
+        }
+
+        foreach ([
+            \Symfony\Component\Yaml\Yaml::class => 'symfony/yaml',
+            \League\CommonMark\MarkdownConverter::class => 'league/commonmark',
+        ] as $class => $package) {
+            if (! class_exists($class)) {
+                throw new \LogicException("kolydart.guide.enabled needs {$package}: composer require {$package}");
+            }
+        }
+
+        // The views are also loaded by ComponentsServiceProvider; loaded here
+        // too, so that registering this provider alone is enough for the guide.
+        $this->loadViewsFrom(__DIR__.'/../Resources/views', 'kolydart');
+
+        $routeConfig = config('kolydart.guide.routes', []);
+
+        \Illuminate\Support\Facades\Route::middleware($routeConfig['middleware'] ?? ['web', 'auth'])
+            ->prefix($routeConfig['prefix'] ?? 'admin')
+            ->name($routeConfig['name'] ?? 'admin.')
+            ->group(function () {
+                $this->loadRoutesFrom(__DIR__.'/../routes/guide.php');
             });
     }
 

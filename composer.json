@@ -30,11 +30,14 @@
         "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
         "illuminate/events": "^10.0|^11.0|^12.0|^13.0",
         "laravel/framework": "^10.0|^11.0|^12.0|^13.0",
-        "spatie/laravel-medialibrary": "^11.0"
+        "spatie/laravel-medialibrary": "^11.0",
+        "symfony/yaml": "^6.4|^7.0|^8.0"
     },
     "suggest": {
         "doctrine/dbal": "Required to generate ERDs.",
-        "spatie/laravel-medialibrary": "Required by the protected media routes (kolydart.media)."
+        "spatie/laravel-medialibrary": "Required by the protected media routes (kolydart.media).",
+        "symfony/yaml": "Required by the in-app guide (kolydart.guide).",
+        "league/commonmark": "Required by the in-app guide (kolydart.guide); installed with laravel/framework."
     },
     "minimum-stability": "dev",
     "prefer-stable": true,
