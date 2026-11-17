@@ -814,7 +814,7 @@ It automatically detects the current resource route (e.g., changes `show` to `ed
 
 ### 4. Form Fields Size
 
-Adds Bootstrap classes to form fields to standardize their size and layout.
+Adds Bootstrap classes to form fields to standardize their size and layout. On `DOMContentLoaded`, every `<form>` of the page gets `row mx-3` and every direct child `div.form-group` gets `col-md-6` (or the given class), so from 768px the fields sit two per row.
 
 **Usage:**
 ```blade
@@ -824,6 +824,11 @@ Adds Bootstrap classes to form fields to standardize their size and layout.
 **Custom Class:**
 ```blade
 <x-kolydart::form-fields-size class="col-md-4" />
+```
+
+**Opt-out:** a form with `data-fields-size="off"` is skipped: the form does not get `row mx-3` and its form groups do not get the column class. Use it for forms that define their own layout; all other forms behave as before.
+```blade
+<form method="POST" action="..." data-fields-size="off">
 ```
 
 ### 5. Keyboard Shortcuts

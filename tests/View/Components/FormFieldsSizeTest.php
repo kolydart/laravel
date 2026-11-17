@@ -37,4 +37,18 @@ class FormFieldsSizeTest extends TestCase
         Assert::assertStringContainsString("form.classList.add('row', 'mx-3')", $renderedView);
         Assert::assertStringContainsString('group.classList.add("{{ $class }}")', $renderedView);
     }
+
+    public function test_form_fields_size_skips_forms_opted_out_with_data_attribute()
+    {
+        // Act
+        $component = new FormFieldsSize();
+        $renderedView = $component->render();
+
+        // Assert: only forms without data-fields-size="off" are selected
+        Assert::assertStringContainsString(
+            "document.querySelectorAll('form:not([data-fields-size=\"off\"])')",
+            $renderedView
+        );
+        Assert::assertStringNotContainsString("document.querySelectorAll('form')", $renderedView);
+    }
 }
